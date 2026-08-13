@@ -1,0 +1,137 @@
+# RabbitMQ Cluster（3节点，仲裁队列 + 镜像队列）
+# 端口：5682、5683、5684（避开 devtools 的 5673）
+# Management UI 端口：15682、15683、15684
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-rabbitmq.yml up -d
+#   docker compose -f cluster/docker-compose-rabbitmq.yml down
+#
+# Management UI: http://localhost:15682 (admin / cZgWD@tPYvTx^EZAWQ-_g5aY)
+# AMQP 连接:     localhost:5682,localhost:5683,localhost:5684
+name: rabbitmq-cluster
+
+services:
+
+  rabbitmq-node-1:
+    restart: always
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-node-1
+    hostname: rabbitmq-node-1
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: cZgWD@tPYvTx^EZAWQ-_g5aY
+      RABBITMQ_ERLANG_COOKIE: "cluster-secret-cookie-local"
+      RABBITMQ_NODENAME: rabbit@rabbitmq-node-1
+    ports:
+      - "5682:5672"
+      - "15682:15672"
+    volumes:
+      - ${VOLUME_BASE}/rabbitmq-cluster/node-1:/var/lib/rabbitmq
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.80
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq-node-2:
+    restart: always
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-node-2
+    hostname: rabbitmq-node-2
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: cZgWD@tPYvTx^EZAWQ-_g5aY
+      RABBITMQ_ERLANG_COOKIE: "cluster-secret-cookie-local"
+      RABBITMQ_NODENAME: rabbit@rabbitmq-node-2
+    ports:
+      - "5683:5672"
+      - "15683:15672"
+    volumes:
+      - ${VOLUME_BASE}/rabbitmq-cluster/node-2:/var/lib/rabbitmq
+    depends_on:
+      rabbitmq-node-1:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.81
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  rabbitmq-node-3:
+    restart: always
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-node-3
+    hostname: rabbitmq-node-3
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: cZgWD@tPYvTx^EZAWQ-_g5aY
+      RABBITMQ_ERLANG_COOKIE: "cluster-secret-cookie-local"
+      RABBITMQ_NODENAME: rabbit@rabbitmq-node-3
+    ports:
+      - "5684:5672"
+      - "15684:15672"
+    volumes:
+      - ${VOLUME_BASE}/rabbitmq-cluster/node-3:/var/lib/rabbitmq
+    depends_on:
+      rabbitmq-node-1:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.82
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "check_running"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # 集群加入初始化
+  rabbitmq-cluster-init:
+    image: rabbitmq:3-management-alpine
+    container_name: rabbitmq-cluster-init
+    hostname: rabbitmq-cluster-init
+    environment:
+      RABBITMQ_ERLANG_COOKIE: "cluster-secret-cookie-local"
+    depends_on:
+      rabbitmq-node-1:
+        condition: service_healthy
+      rabbitmq-node-2:
+        condition: service_healthy
+      rabbitmq-node-3:
+        condition: service_healthy
+    command: >
+      sh -c "
+        echo '>>> Joining node-2 to cluster...' &&
+        docker exec rabbitmq-node-2 rabbitmqctl stop_app &&
+        docker exec rabbitmq-node-2 rabbitmqctl reset &&
+        docker exec rabbitmq-node-2 rabbitmqctl join_cluster rabbit@rabbitmq-node-1 &&
+        docker exec rabbitmq-node-2 rabbitmqctl start_app &&
+        echo '>>> Joining node-3 to cluster...' &&
+        docker exec rabbitmq-node-3 rabbitmqctl stop_app &&
+        docker exec rabbitmq-node-3 rabbitmqctl reset &&
+        docker exec rabbitmq-node-3 rabbitmqctl join_cluster rabbit@rabbitmq-node-1 &&
+        docker exec rabbitmq-node-3 rabbitmqctl start_app &&
+        echo '>>> Setting HA policy...' &&
+        docker exec rabbitmq-node-1 rabbitmqctl set_policy ha-all '^' '{\"ha-mode\":\"all\",\"ha-sync-mode\":\"automatic\"}' &&
+        echo '>>> RabbitMQ cluster configured!'
+      "
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.83
+    restart: "no"
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

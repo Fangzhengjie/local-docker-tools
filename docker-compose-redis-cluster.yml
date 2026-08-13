@@ -1,0 +1,211 @@
+# Redis Cluster（3主3从，端口 7001-7006）— 分片高可用
+#
+# 端口不与 devtools 单机 Redis (6379) 冲突，可同时运行
+#
+# Usage:
+#   make cluster-redis-cluster-up
+#   make cluster-redis-cluster-down
+#
+# 连接 Cluster:  redis-cli -c -p 7001 -a 'cZgWD@tPYvTx^EZAWQ-_g5aY'
+name: redis-cluster
+
+services:
+
+  redis-cluster-1:
+    restart: always
+    image: redis:7-alpine
+    container_name: redis-cluster-1
+    command: >
+      redis-server
+      --port 7001
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass cZgWD@tPYvTx^EZAWQ-_g5aY
+      --masterauth cZgWD@tPYvTx^EZAWQ-_g5aY
+    ports:
+      - "7001:7001"
+    volumes:
+      - ${VOLUME_BASE}/redis-cluster/node-1:/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.11
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7001", "-a", "cZgWD@tPYvTx^EZAWQ-_g5aY", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-cluster-2:
+    restart: always
+    image: redis:7-alpine
+    container_name: redis-cluster-2
+    command: >
+      redis-server
+      --port 7002
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass cZgWD@tPYvTx^EZAWQ-_g5aY
+      --masterauth cZgWD@tPYvTx^EZAWQ-_g5aY
+    ports:
+      - "7002:7002"
+    volumes:
+      - ${VOLUME_BASE}/redis-cluster/node-2:/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.12
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7002", "-a", "cZgWD@tPYvTx^EZAWQ-_g5aY", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-cluster-3:
+    restart: always
+    image: redis:7-alpine
+    container_name: redis-cluster-3
+    command: >
+      redis-server
+      --port 7003
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass cZgWD@tPYvTx^EZAWQ-_g5aY
+      --masterauth cZgWD@tPYvTx^EZAWQ-_g5aY
+    ports:
+      - "7003:7003"
+    volumes:
+      - ${VOLUME_BASE}/redis-cluster/node-3:/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.13
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7003", "-a", "cZgWD@tPYvTx^EZAWQ-_g5aY", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-cluster-4:
+    restart: always
+    image: redis:7-alpine
+    container_name: redis-cluster-4
+    command: >
+      redis-server
+      --port 7004
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass cZgWD@tPYvTx^EZAWQ-_g5aY
+      --masterauth cZgWD@tPYvTx^EZAWQ-_g5aY
+    ports:
+      - "7004:7004"
+    volumes:
+      - ${VOLUME_BASE}/redis-cluster/node-4:/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.14
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7004", "-a", "cZgWD@tPYvTx^EZAWQ-_g5aY", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-cluster-5:
+    restart: always
+    image: redis:7-alpine
+    container_name: redis-cluster-5
+    command: >
+      redis-server
+      --port 7005
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass cZgWD@tPYvTx^EZAWQ-_g5aY
+      --masterauth cZgWD@tPYvTx^EZAWQ-_g5aY
+    ports:
+      - "7005:7005"
+    volumes:
+      - ${VOLUME_BASE}/redis-cluster/node-5:/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.15
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7005", "-a", "cZgWD@tPYvTx^EZAWQ-_g5aY", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  redis-cluster-6:
+    restart: always
+    image: redis:7-alpine
+    container_name: redis-cluster-6
+    command: >
+      redis-server
+      --port 7006
+      --cluster-enabled yes
+      --cluster-config-file nodes.conf
+      --cluster-node-timeout 5000
+      --appendonly yes
+      --requirepass cZgWD@tPYvTx^EZAWQ-_g5aY
+      --masterauth cZgWD@tPYvTx^EZAWQ-_g5aY
+    ports:
+      - "7006:7006"
+    volumes:
+      - ${VOLUME_BASE}/redis-cluster/node-6:/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.16
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "7006", "-a", "cZgWD@tPYvTx^EZAWQ-_g5aY", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # 集群初始化（一次性任务，创建 3主3从拓扑）
+  redis-cluster-init:
+    image: redis:7-alpine
+    container_name: redis-cluster-init
+    depends_on:
+      redis-cluster-1:
+        condition: service_healthy
+      redis-cluster-2:
+        condition: service_healthy
+      redis-cluster-3:
+        condition: service_healthy
+      redis-cluster-4:
+        condition: service_healthy
+      redis-cluster-5:
+        condition: service_healthy
+      redis-cluster-6:
+        condition: service_healthy
+    command:
+      - sh
+      - -c
+      - |
+        echo 'yes' | redis-cli -a 'cZgWD@tPYvTx^EZAWQ-_g5aY' --cluster create \
+          172.21.0.11:7001 \
+          172.21.0.12:7002 \
+          172.21.0.13:7003 \
+          172.21.0.14:7004 \
+          172.21.0.15:7005 \
+          172.21.0.16:7006 \
+          --cluster-replicas 1 &&
+        echo 'Redis Cluster created successfully!'
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.10
+    restart: "no"
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

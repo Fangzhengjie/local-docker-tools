@@ -1,0 +1,143 @@
+# Kafka Cluster（3 Broker KRaft 模式，无 ZooKeeper）
+# Broker 端口：9192、9193、9194（避开 devtools 的 9092）
+# Kafka UI 端口：8480
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-kafka.yml up -d
+#   docker compose -f cluster/docker-compose-kafka.yml down
+#
+# 连接: kafka-console-producer.sh --bootstrap-server localhost:9192,localhost:9193,localhost:9194 --topic test
+name: kafka-cluster
+
+services:
+
+  kafka-cluster-1:
+    restart: always
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: kafka-cluster-1
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-cluster-1:9093,2@kafka-cluster-2:9093,3@kafka-cluster-3:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-cluster-1:29092,PLAINTEXT_HOST://localhost:9192
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9192,CONTROLLER://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "Y2x1c3Rlci1sb2NhbC0x"
+    ports:
+      - "9192:9192"
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.50
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9192"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka-cluster-2:
+    restart: always
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: kafka-cluster-2
+    environment:
+      KAFKA_NODE_ID: 2
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-cluster-1:9093,2@kafka-cluster-2:9093,3@kafka-cluster-3:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-cluster-2:29092,PLAINTEXT_HOST://localhost:9193
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9193,CONTROLLER://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "Y2x1c3Rlci1sb2NhbC0x"
+    ports:
+      - "9193:9193"
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.51
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9193"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka-cluster-3:
+    restart: always
+    image: confluentinc/cp-kafka:7.7.1
+    container_name: kafka-cluster-3
+    environment:
+      KAFKA_NODE_ID: 3
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka-cluster-1:9093,2@kafka-cluster-2:9093,3@kafka-cluster-3:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka-cluster-3:29092,PLAINTEXT_HOST://localhost:9194
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9194,CONTROLLER://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 3
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 2
+      KAFKA_DEFAULT_REPLICATION_FACTOR: 3
+      KAFKA_MIN_INSYNC_REPLICAS: 2
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      CLUSTER_ID: "Y2x1c3Rlci1sb2NhbC0x"
+    ports:
+      - "9194:9194"
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.52
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9194"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka-cluster-ui:
+    restart: always
+    image: provectuslabs/kafka-ui:v0.7.2
+    container_name: kafka-cluster-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local-cluster
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka-cluster-1:29092,kafka-cluster-2:29092,kafka-cluster-3:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+    ports:
+      - "8480:8080"
+    depends_on:
+      kafka-cluster-1:
+        condition: service_healthy
+      kafka-cluster-2:
+        condition: service_healthy
+      kafka-cluster-3:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.53
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

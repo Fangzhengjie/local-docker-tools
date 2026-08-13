@@ -1,0 +1,93 @@
+# 可观测性：Prometheus, Grafana, Jaeger, OpenObserve
+# Usage: docker compose -f compose/observability.yml up -d
+name: observability
+
+services:
+
+  prometheus:
+    restart: always
+    image: prom/prometheus:latest
+    container_name: prometheus
+    user: root
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.external-url=/prometheus/'
+    ports:
+      - "9090:9090"
+    volumes:
+      - ${VOLUME_BASE}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ${VOLUME_BASE}/prometheus/data:/prometheus
+    networks:
+      observability-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  grafana:
+    restart: always
+    image: grafana/grafana:latest
+    container_name: grafana
+    user: root
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      GF_USERS_ALLOW_SIGN_UP: "false"
+      GF_SERVER_ROOT_URL: "http://localhost/grafana/"
+      GF_SERVER_SERVE_FROM_SUB_PATH: "true"
+    volumes:
+      - ${VOLUME_BASE}/grafana/data:/var/lib/grafana
+      - ${VOLUME_BASE}/grafana/provisioning:/etc/grafana/provisioning
+    networks:
+      observability-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
+  jaeger:
+    restart: always
+    image: jaegertracing/all-in-one:latest
+    container_name: jaeger
+    ports:
+      - "4317:4317"     # OTLP gRPC（应用上报）
+      - "4318:4318"     # OTLP HTTP（应用上报）
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+      QUERY_BASE_PATH: /jaeger
+    networks:
+      observability-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:16686"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  openobserve:
+    restart: always
+    image: openobserve/openobserve:latest
+    container_name: openobserve
+    ports:
+      - "5080:5080"     # OTLP HTTP（应用上报日志/链路）
+    environment:
+      ZO_ROOT_USER_EMAIL: admin@local.com
+      ZO_ROOT_USER_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      ZO_DATA_DIR: /data
+    volumes:
+      - ${VOLUME_BASE}/openobserve/data:/data
+    networks:
+      observability-network:
+    healthcheck:
+      test: ["NONE"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  observability-network:
+    name: observability-network
+    external: true

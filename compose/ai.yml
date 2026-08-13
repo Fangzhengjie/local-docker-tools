@@ -1,0 +1,396 @@
+# AI 服务：Ollama, Open WebUI, Pipelines, SearXNG, MCPO,
+#          向量数据库（Qdrant, Milvus, Weaviate, ChromaDB, pgvector）,
+#          LiteLLM, Flowise
+# Usage: docker compose -f compose/ai.yml up -d
+# 依赖：infra project 需先启动（提供 devtools-network）
+name: ai
+
+services:
+
+  # ─────────────────────────────────────────────
+  # 本地 LLM：Ollama + Open WebUI
+  # ─────────────────────────────────────────────
+
+  # Ollama - 本地 LLM 推理引擎（支持 llama3、mistral、qwen 等）
+  # 模型存储在 VOLUME_BASE/ollama/models，首次使用需手动 pull
+  ollama:
+    restart: always
+    image: ollama/ollama:latest
+    container_name: ollama
+    ports:
+      - "11434:11434"   # Ollama REST API（兼容 OpenAI /v1/chat/completions）
+    volumes:
+      - ${VOLUME_BASE}/ollama/models:/root/.ollama
+    environment:
+      OLLAMA_KEEP_ALIVE: "24h"
+      OLLAMA_NUM_PARALLEL: 2
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "ollama", "list"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # Open WebUI - 本地 ChatGPT 风格界面，对接 Ollama
+  open-webui:
+    restart: always
+    image: ghcr.io/open-webui/open-webui:latest
+    container_name: open-webui
+    ports:
+      - "3100:8080"     # Web UI
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+      WEBUI_SECRET_KEY: change-me-in-production
+      ENABLE_RAG_WEB_SEARCH: "true"
+      RAG_WEB_SEARCH_ENGINE: searxng
+      SEARXNG_QUERY_URL: http://searxng:8080/search?q=<query>
+    volumes:
+      - ${VOLUME_BASE}/open-webui/data:/app/backend/data
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # Open WebUI 扩展：Pipelines / SearXNG / MCPO
+  # ─────────────────────────────────────────────
+
+  # Pipelines - Open WebUI 函数管道（自定义 RAG / Filter / Function）
+  pipelines:
+    restart: always
+    image: ghcr.io/open-webui/pipelines:main
+    container_name: pipelines
+    ports:
+      - "9099:9099"     # Pipeline API
+    volumes:
+      - ${VOLUME_BASE}/pipelines/data:/app/pipelines
+    environment:
+      PIPELINES_URLS: ""
+    depends_on:
+      open-webui:
+        condition: service_healthy
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9099/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # SearXNG - 隐私搜索引擎（给 Open WebUI 提供 Web 搜索能力）
+  searxng:
+    restart: always
+    image: searxng/searxng:latest
+    container_name: searxng
+    ports:
+      - "8888:8080"     # Web UI（避开其他 8080 服务）
+    volumes:
+      - ${VOLUME_BASE}/searxng/data:/etc/searxng
+    environment:
+      SEARXNG_BASE_URL: http://searxng:8080/
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # MCPO - MCP-to-OpenAPI 桥接（将 MCP 工具暴露为 OpenAPI 给 Open WebUI）
+  mcpo:
+    restart: always
+    image: ghcr.io/open-webui/mcpo:main
+    container_name: mcpo
+    ports:
+      - "8800:8000"     # OpenAPI endpoint
+    volumes:
+      - ${VOLUME_BASE}/mcpo/config:/app/config
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────
+  # 向量数据库：Qdrant（RAG / 语义搜索）
+  # ─────────────────────────────────────────────
+
+  # Qdrant - 高性能向量数据库，适合 RAG 场景
+  qdrant:
+    restart: always
+    image: qdrant/qdrant:latest
+    container_name: qdrant
+    ports:
+      - "6333:6333"     # REST API + Web UI（http://localhost:6333/dashboard）
+      - "6334:6334"     # gRPC
+    volumes:
+      - ${VOLUME_BASE}/qdrant/data:/qdrant/storage
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/6333' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────
+  # 向量数据库：Milvus（生产级，支持十亿级向量）
+  # 依赖 etcd（元数据）+ minio-milvus（对象存储）
+  # ─────────────────────────────────────────────
+
+  # etcd - Milvus 元数据存储
+  milvus-etcd:
+    restart: always
+    image: quay.io/coreos/etcd:v3.5.25
+    container_name: milvus-etcd
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+      ETCD_ADVERTISE_CLIENT_URLS: http://milvus-etcd:2379
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+      ETCD_DATA_DIR: /etcd-data
+    command: ["etcd"]
+    volumes:
+      - ${VOLUME_BASE}/milvus/etcd:/etcd-data
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "etcdctl", "endpoint", "health"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # MinIO - Milvus 对象存储（独立实例，避免与 devtools minio 冲突）
+  milvus-minio:
+    restart: always
+    image: minio/minio:latest
+    container_name: milvus-minio
+    environment:
+      MINIO_ROOT_USER: admin
+      MINIO_ROOT_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+    volumes:
+      - ${VOLUME_BASE}/milvus/minio:/data
+    command: minio server /data --console-address ":9001"
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Milvus Standalone - 高性能向量数据库
+  milvus:
+    restart: always
+    image: milvusdb/milvus:v3.0.0
+    container_name: milvus
+    user: "0:0"
+    command: ["milvus", "run", "standalone"]
+    security_opt:
+      - seccomp:unconfined
+    ports:
+      - "19530:19530"   # gRPC + REST API
+      - "9091:9091"     # Metrics
+    environment:
+      ETCD_ENDPOINTS: milvus-etcd:2379
+      MINIO_ADDRESS: milvus-minio:9000
+      MINIO_REGION: us-east-1
+    volumes:
+      - ${VOLUME_BASE}/milvus/data:/var/lib/milvus
+    depends_on:
+      milvus-etcd:
+        condition: service_healthy
+      milvus-minio:
+        condition: service_healthy
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9091/healthz || wget -q -O - http://localhost:9091/healthz || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 90s
+
+  # Attu - Milvus 可视化管理界面
+  attu:
+    restart: always
+    image: zilliz/attu:v3.0.0-beta.6
+    container_name: attu
+    ports:
+      - "8300:3000"
+    environment:
+      MILVUS_ADDRESS: milvus:19530
+    depends_on:
+      milvus:
+        condition: service_healthy
+    networks:
+      ai-network:
+
+  # ─────────────────────────────────────────────
+  # 向量数据库：Weaviate（GraphQL 原生，模块化架构）
+  # ─────────────────────────────────────────────
+
+  weaviate:
+    restart: always
+    image: semitechnologies/weaviate:latest
+    container_name: weaviate
+    ports:
+      - "8380:8080"     # REST API（避开其他 8080）
+      - "50051:50051"   # gRPC
+    environment:
+      QUERY_DEFAULTS_LIMIT: 25
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: "true"
+      PERSISTENCE_DATA_PATH: /var/lib/weaviate
+      DEFAULT_VECTORIZER_MODULE: none
+      CLUSTER_HOSTNAME: weaviate-node1
+    volumes:
+      - ${VOLUME_BASE}/weaviate/data:/var/lib/weaviate
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/v1/.well-known/ready"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  # ─────────────────────────────────────────────
+  # 向量数据库：ChromaDB（轻量级，LangChain 默认推荐）
+  # ─────────────────────────────────────────────
+
+  chromadb:
+    restart: always
+    image: chromadb/chroma:latest
+    container_name: chromadb
+    ports:
+      - "8100:8000"     # REST API（避开其他 8000）
+    environment:
+      IS_PERSISTENT: "TRUE"
+      ANONYMIZED_TELEMETRY: "FALSE"
+      PERSIST_DIRECTORY: /chroma/chroma
+    volumes:
+      - ${VOLUME_BASE}/chromadb/data:/chroma/chroma
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8000' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────
+  # 向量数据库：pgvector（PostgreSQL 向量扩展，SQL 原生）
+  # ─────────────────────────────────────────────
+
+  pgvector:
+    restart: always
+    image: pgvector/pgvector:pg16
+    container_name: pgvector
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      POSTGRES_DB: vectordb
+    ports:
+      - "5433:5432"     # 避开 devtools postgres 的 5432
+    volumes:
+      - ${VOLUME_BASE}/pgvector/data:/var/lib/postgresql/data
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # ─────────────────────────────────────────────
+  # LLM 网关：LiteLLM（统一 API 代理）
+  # ─────────────────────────────────────────────
+
+  litellm:
+    restart: always
+    image: ghcr.io/berriai/litellm:main-latest
+    pull_policy: missing
+    container_name: litellm
+    ports:
+      - "4000:4000"     # OpenAI 兼容 API（/v1/chat/completions）
+      - "4001:4001"     # Prometheus metrics
+    environment:
+      LITELLM_MASTER_KEY: "sk-local-dev-key"
+      DATABASE_URL: "postgresql://postgres:cZgWD@tPYvTx^EZAWQ-_g5aY@postgres:5432/litellm"
+      STORE_MODEL_IN_DB: "True"
+      UI_USERNAME: admin
+      UI_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+    volumes:
+      - ${VOLUME_BASE}/litellm/config.yaml:/app/config.yaml:ro
+    command: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:4000/health/liveliness"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ─────────────────────────────────────────────
+  # AI 流程编排：Flowise（可视化 LLM 工作流）
+  # ─────────────────────────────────────────────
+
+  flowise:
+    restart: always
+    image: flowiseai/flowise:2.2.7
+    container_name: flowise
+    user: "0:0"
+    ports:
+      - "3101:3000"     # Web UI
+    environment:
+      PORT: 3000
+      FLOWISE_USERNAME: admin
+      FLOWISE_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      APIKEY_PATH: /root/.flowise
+      SECRETKEY_PATH: /root/.flowise
+      LOG_PATH: /root/.flowise/logs
+      DATABASE_PATH: /root/.flowise
+      BLOB_STORAGE_PATH: /root/.flowise/storage
+      OLLAMA_BASE_PATH: http://ollama:11434
+    volumes:
+      - ${VOLUME_BASE}/flowise/data:/root/.flowise
+    depends_on:
+      ollama:
+        condition: service_healthy
+    networks:
+      ai-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  ai-network:
+    name: ai-network
+    external: true

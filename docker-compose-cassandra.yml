@@ -1,0 +1,107 @@
+# Cassandra Cluster（3节点环状拓扑，去中心化）
+# CQL 端口：9043、9044、9045（避开 devtools 的 9042）
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-cassandra.yml up -d
+#   docker compose -f cluster/docker-compose-cassandra.yml down
+#
+# 连接: cqlsh localhost 9043
+# 查看集群状态: docker exec cassandra-node-1 nodetool status
+name: cassandra-cluster
+
+services:
+
+  cassandra-node-1:
+    restart: always
+    image: cassandra:4
+    container_name: cassandra-node-1
+    environment:
+      CASSANDRA_CLUSTER_NAME: LocalCluster
+      CASSANDRA_SEEDS: cassandra-node-1
+      CASSANDRA_DC: dc1
+      CASSANDRA_RACK: rack1
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      CASSANDRA_NUM_TOKENS: 128
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+    ports:
+      - "9043:9042"
+    volumes:
+      - ${VOLUME_BASE}/cassandra-cluster/node-1:/var/lib/cassandra
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.120
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q 'UN' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  cassandra-node-2:
+    restart: always
+    image: cassandra:4
+    container_name: cassandra-node-2
+    environment:
+      CASSANDRA_CLUSTER_NAME: LocalCluster
+      CASSANDRA_SEEDS: cassandra-node-1
+      CASSANDRA_DC: dc1
+      CASSANDRA_RACK: rack2
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      CASSANDRA_NUM_TOKENS: 128
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+    ports:
+      - "9044:9042"
+    volumes:
+      - ${VOLUME_BASE}/cassandra-cluster/node-2:/var/lib/cassandra
+    depends_on:
+      cassandra-node-1:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.121
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q 'UN' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  cassandra-node-3:
+    restart: always
+    image: cassandra:4
+    container_name: cassandra-node-3
+    environment:
+      CASSANDRA_CLUSTER_NAME: LocalCluster
+      CASSANDRA_SEEDS: cassandra-node-1
+      CASSANDRA_DC: dc1
+      CASSANDRA_RACK: rack3
+      CASSANDRA_ENDPOINT_SNITCH: GossipingPropertyFileSnitch
+      CASSANDRA_NUM_TOKENS: 128
+      MAX_HEAP_SIZE: 512M
+      HEAP_NEWSIZE: 128M
+    ports:
+      - "9045:9042"
+    volumes:
+      - ${VOLUME_BASE}/cassandra-cluster/node-3:/var/lib/cassandra
+    depends_on:
+      cassandra-node-1:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.122
+    healthcheck:
+      test: ["CMD-SHELL", "nodetool status | grep -q 'UN' || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

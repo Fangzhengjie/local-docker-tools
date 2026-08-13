@@ -1,0 +1,96 @@
+# 基础设施：Nginx 反向代理 + DNS
+# Usage: docker compose -f compose/infra.yml up -d
+# 注意：infra 创建所有网络。其他 project 以 external: true 引用。
+name: infra
+
+services:
+
+  nginx:
+    restart: always
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ${VOLUME_BASE}/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ${VOLUME_BASE}/nginx/conf.d:/etc/nginx/conf.d:ro
+      - ${VOLUME_BASE}/nginx/certs:/etc/nginx/certs:ro
+      - ${VOLUME_BASE}/nginx/html:/usr/share/nginx/html:ro
+    networks:
+      infra-network:
+        ipv4_address: 172.18.0.2
+      database-network:
+      messaging-network:
+      observability-network:
+      bigdata-network:
+      storage-network:
+      devops-network:
+      ai-network:
+
+  # DNS 服务：供 Android 模拟器解析 *.local.dev
+  # 模拟器启动参数: emulator -avd <名> -dns-server 10.0.2.2
+  dnsmasq:
+    restart: always
+    image: andyshinn/dnsmasq:latest
+    container_name: dnsmasq
+    cap_add:
+      - NET_ADMIN
+    ports:
+      - "53:53/udp"
+      - "53:53/tcp"
+    volumes:
+      - ${VOLUME_BASE}/etc/dnsmasq/dnsmasq.conf:/etc/dnsmasq.conf:ro
+    networks:
+      infra-network:
+        ipv4_address: 172.18.0.53
+
+networks:
+  infra-network:
+    name: infra-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.18.0.0/24
+  database-network:
+    name: database-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/24
+  messaging-network:
+    name: messaging-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.1.0/24
+  observability-network:
+    name: observability-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.2.0/24
+  bigdata-network:
+    name: bigdata-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.3.0/24
+  storage-network:
+    name: storage-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.4.0/24
+  devops-network:
+    name: devops-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.5.0/24
+  ai-network:
+    name: ai-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.6.0/24

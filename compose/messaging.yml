@@ -1,0 +1,147 @@
+# 消息队列：Kafka, RabbitMQ, RocketMQ
+# Usage: docker compose -f compose/messaging.yml up -d
+name: messaging
+
+services:
+
+  kafka:
+    restart: always
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    environment:
+      KAFKA_NODE_ID: 1
+      KAFKA_PROCESS_ROLES: broker,controller
+      KAFKA_CONTROLLER_QUORUM_VOTERS: 1@kafka:9093
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT,CONTROLLER:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENERS: PLAINTEXT://0.0.0.0:29092,PLAINTEXT_HOST://0.0.0.0:9092,CONTROLLER://0.0.0.0:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_CONTROLLER_LISTENER_NAMES: CONTROLLER
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+      CLUSTER_ID: 'MkU3OEVBNTcwNTJENDM2Qk'
+    ports:
+      - "9092:9092"
+    networks:
+      messaging-network:
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  kafka-ui:
+    restart: always
+    image: provectuslabs/kafka-ui:latest
+    container_name: kafka-ui
+    environment:
+      KAFKA_CLUSTERS_0_NAME: local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      DYNAMIC_CONFIG_ENABLED: "true"
+      SERVER_SERVLET_CONTEXT_PATH: /kafka-ui
+    depends_on:
+      kafka:
+        condition: service_healthy
+    networks:
+      messaging-network:
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/kafka-ui/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # RabbitMQ（AMQP，含 Management UI）
+  rabbitmq:
+    restart: always
+    image: rabbitmq:management
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"     # AMQP
+    environment:
+      RABBITMQ_DEFAULT_USER: admin
+      RABBITMQ_DEFAULT_PASS: cZgWD@tPYvTx^EZAWQ-_g5aY
+      RABBITMQ_MANAGEMENT_PATH_PREFIX: /rabbitmq
+    volumes:
+      - ${VOLUME_BASE}/rabbitmq:/var/lib/rabbitmq
+    networks:
+      messaging-network:
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # RocketMQ NameServer
+  rocketmq-namesrv:
+    restart: always
+    image: apache/rocketmq:latest
+    container_name: rocketmq-namesrv
+    command: sh mqnamesrv
+    ports:
+      - "9876:9876"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq/namesrv/logs:/home/rocketmq/logs
+    networks:
+      messaging-network:
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9876 || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # RocketMQ Broker
+  rocketmq-broker:
+    restart: always
+    image: apache/rocketmq:latest
+    container_name: rocketmq-broker
+    user: root
+    command: sh mqbroker -n rocketmq-namesrv:9876 autoCreateTopicEnable=true
+    ports:
+      - "10909:10909"
+      - "10911:10911"
+    environment:
+      HEAP_OPTS: "-Xms256m -Xmx256m -Xmn128m -XX:MaxDirectMemorySize=256m"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq/broker/logs:/home/rocketmq/logs
+      - ${VOLUME_BASE}/rocketmq/broker/store:/home/rocketmq/store
+    depends_on:
+      rocketmq-namesrv:
+        condition: service_healthy
+    networks:
+      messaging-network:
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:10911 || exit 0"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # RocketMQ Dashboard
+  rocketmq-dashboard:
+    restart: always
+    image: apacherocketmq/rocketmq-dashboard:latest
+    container_name: rocketmq-dashboard
+    environment:
+      JAVA_OPTS: "-Drocketmq.namesrv.addr=rocketmq-namesrv:9876"
+    depends_on:
+      rocketmq-broker:
+        condition: service_healthy
+    networks:
+      messaging-network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8082/"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  messaging-network:
+    name: messaging-network
+    external: true

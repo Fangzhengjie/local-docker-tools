@@ -1,0 +1,191 @@
+# 大数据：ZooKeeper, Hadoop, Hive, Spark, Flink, ClickHouse
+# Usage: docker compose -f compose/bigdata.yml up -d
+name: bigdata
+
+services:
+
+  # ZooKeeper（Hive / HBase 依赖）
+  zookeeper:
+    restart: always
+    image: zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOO_4LW_COMMANDS_WHITELIST: "srvr,stat,ruok"
+    ports:
+      - "2181:2181"
+    volumes:
+      - ${VOLUME_BASE}/zookeeper/data:/data
+      - ${VOLUME_BASE}/zookeeper/datalog:/datalog
+    networks:
+      bigdata-network:
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 20s
+
+  # Hadoop NameNode（HDFS，Hive 依赖）
+  hadoop:
+    restart: always
+    image: apache/hadoop:latest
+    container_name: hadoop
+    user: root
+    environment:
+      HADOOP_HOME: /opt/hadoop
+      ENSURE_NAMENODE_DIR: /tmp/hadoop-root/dfs/name
+    command:
+      - bash
+      - -c
+      - |
+        cat > /opt/hadoop/etc/hadoop/core-site.xml << 'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <configuration>
+          <property><name>fs.defaultFS</name><value>hdfs://hadoop:8020</value></property>
+        </configuration>
+        EOF
+        cat > /opt/hadoop/etc/hadoop/hdfs-site.xml << 'EOF'
+        <?xml version="1.0" encoding="UTF-8"?>
+        <configuration>
+          <property><name>dfs.replication</name><value>1</value></property>
+          <property><name>dfs.namenode.name.dir</name><value>/tmp/hadoop-root/dfs/name</value></property>
+          <property><name>dfs.datanode.data.dir</name><value>/tmp/hadoop-root/dfs/data</value></property>
+        </configuration>
+        EOF
+        if [ ! -d /tmp/hadoop-root/dfs/name/current ]; then
+          hdfs namenode -format -force -nonInteractive
+        fi
+        hdfs datanode &
+        exec hdfs namenode
+    ports:
+      - "8020:8020"   # HDFS RPC
+    volumes:
+      - ${VOLUME_BASE}/hadoop/namenode:/tmp/hadoop-root/dfs/name
+      - ${VOLUME_BASE}/hadoop/datanode:/tmp/hadoop-root/dfs/data
+    networks:
+      bigdata-network:
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9870/jmx?qry=Hadoop:service=NameNode,name=NameNodeStatus || exit 1"]
+      interval: 30s
+      timeout: 15s
+      retries: 5
+      start_period: 60s
+
+  # Hive Metastore + HiveServer2（依赖 hadoop）
+  hive:
+    restart: always
+    image: apache/hive:latest
+    container_name: hive
+    environment:
+      SERVICE_NAME: hiveserver2
+    ports:
+      - "10010:10000"  # HiveServer2 JDBC（避开 azurite 的 10000）
+    depends_on:
+      hadoop:
+        condition: service_healthy
+    networks:
+      bigdata-network:
+    healthcheck:
+      test: ["CMD-SHELL", "beeline -u 'jdbc:hive2://localhost:10000' -e 'show databases;' || exit 1"]
+      interval: 60s
+      timeout: 30s
+      retries: 5
+      start_period: 120s
+
+  # Apache Spark（Master）
+  spark:
+    restart: always
+    image: apache/spark:latest
+    container_name: spark
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+    environment:
+      SPARK_MASTER_HOST: spark
+      SPARK_MASTER_PORT: 7077
+      SPARK_MASTER_WEBUI_PORT: 8080
+    ports:
+      - "7077:7077"   # Spark Master RPC
+    networks:
+      bigdata-network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Spark Worker
+  spark-worker:
+    restart: always
+    image: apache/spark:latest
+    container_name: spark-worker
+    command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark:7077
+    environment:
+      SPARK_WORKER_MEMORY: 1G
+      SPARK_WORKER_CORES: 1
+    depends_on:
+      - spark
+    networks:
+      bigdata-network:
+
+  # Apache Flink（JobManager）
+  flink:
+    restart: always
+    image: flink:latest
+    container_name: flink
+    command: jobmanager
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink
+        taskmanager.numberOfTaskSlots: 2
+    networks:
+      bigdata-network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081/overview"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # Flink TaskManager
+  flink-taskmanager:
+    restart: always
+    image: flink:latest
+    container_name: flink-taskmanager
+    command: taskmanager
+    environment:
+      FLINK_PROPERTIES: |
+        jobmanager.rpc.address: flink
+        taskmanager.numberOfTaskSlots: 2
+        taskmanager.memory.process.size: 1024m
+    depends_on:
+      - flink
+    networks:
+      bigdata-network:
+
+  # ClickHouse（列式 OLAP 数据库）
+  clickhouse:
+    restart: always
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse
+    ports:
+      - "9009:9000"   # Native TCP（应用直连）
+    environment:
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    volumes:
+      - ${VOLUME_BASE}/clickhouse/data:/var/lib/clickhouse
+      - ${VOLUME_BASE}/clickhouse/logs:/var/log/clickhouse-server
+    networks:
+      bigdata-network:
+    healthcheck:
+      test: ["CMD", "clickhouse-client", "--query", "SELECT 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  bigdata-network:
+    name: bigdata-network
+    external: true

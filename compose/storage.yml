@@ -1,0 +1,75 @@
+# 存储：MinIO, CosmosDB, Azure Storage (Azurite)
+# Usage: docker compose -f compose/storage.yml up -d
+name: storage
+
+services:
+
+  minio:
+    restart: always
+    image: minio/minio:latest
+    container_name: minio
+    ports:
+      - "9001:9000"   # S3 API（应用直连）
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+    volumes:
+      - ${VOLUME_BASE}/minio/data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      storage-network:
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  cosmosdb:
+    restart: always
+    image: mcr.microsoft.com/cosmosdb/linux/azure-cosmos-emulator:latest
+    container_name: cosmosdb
+    ports:
+      - "8081:8081"     # Data Explorer & API
+      - "10251:10251"
+      - "10252:10252"
+      - "10253:10253"
+      - "10254:10254"
+    environment:
+      AZURE_COSMOS_EMULATOR_PARTITION_COUNT: 10
+      AZURE_COSMOS_EMULATOR_ENABLE_DATA_PERSISTENCE: "true"
+      AZURE_COSMOS_EMULATOR_IP_ADDRESS_OVERRIDE: 127.0.0.1
+    volumes:
+      - ${VOLUME_BASE}/cosmosdb:/tmp/cosmos/appdata
+    networks:
+      storage-network:
+    healthcheck:
+      test: ["CMD", "curl", "-f", "-k", "https://localhost:8081/_explorer/emulator.pem"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+  azure-storage:
+    restart: always
+    image: mcr.microsoft.com/azure-storage/azurite:latest
+    container_name: azure-storage
+    ports:
+      - "10000:10000"   # Blob
+      - "10001:10001"   # Queue
+      - "10002:10002"   # File Share
+    volumes:
+      - ${VOLUME_BASE}/azurite:/data
+    command: azurite --blobHost 0.0.0.0 --queueHost 0.0.0.0 --tableHost 0.0.0.0 --location /data --loose
+    networks:
+      storage-network:
+    healthcheck:
+      test: ["CMD-SHELL", "node -e \"require('http').get('http://localhost:10000', (r) => process.exit(r.statusCode === 400 ? 0 : 1)).on('error', () => process.exit(1))\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  storage-network:
+    name: storage-network
+    external: true

@@ -1,0 +1,158 @@
+# ClickHouse Cluster（2分片 × 2副本，依赖 ZooKeeper 协调）
+# 端口：8124、8125、8126、8127（避开 devtools 的 8123）
+# Native 端口：9010、9011、9012、9013（避开 devtools 的 9009）
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-clickhouse.yml up -d
+#   docker compose -f cluster/docker-compose-clickhouse.yml down
+#
+# 连接: clickhouse-client --host 127.0.0.1 --port 9010 --user admin --password 'cZgWD@tPYvTx^EZAWQ-_g5aY'
+# HTTP: curl 'http://localhost:8124?user=admin&password=cZgWD@tPYvTx^EZAWQ-_g5aY' -d 'SELECT * FROM system.clusters'
+name: clickhouse-cluster
+
+services:
+
+  # ZooKeeper for ClickHouse 协调
+  clickhouse-zk:
+    restart: always
+    image: zookeeper:3.9
+    container_name: clickhouse-zk
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_4LW_COMMANDS_WHITELIST: "mntr,ruok,srvr"
+    volumes:
+      - ${VOLUME_BASE}/clickhouse-cluster/zk/data:/data
+      - ${VOLUME_BASE}/clickhouse-cluster/zk/datalog:/datalog
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.100
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Shard 1 Replica 1
+  clickhouse-s1r1:
+    restart: always
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-s1r1
+    environment:
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "8124:8123"
+      - "9010:9000"
+    volumes:
+      - ${VOLUME_BASE}/clickhouse-cluster/s1r1/data:/var/lib/clickhouse
+      - ${VOLUME_BASE}/clickhouse-cluster/s1r1/logs:/var/log/clickhouse-server
+      - ./clickhouse/clickhouse-s1r1.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+    depends_on:
+      clickhouse-zk:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.101
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user admin --password 'cZgWD@tPYvTx^EZAWQ-_g5aY' --query 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Shard 1 Replica 2
+  clickhouse-s1r2:
+    restart: always
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-s1r2
+    environment:
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "8125:8123"
+      - "9011:9000"
+    volumes:
+      - ${VOLUME_BASE}/clickhouse-cluster/s1r2/data:/var/lib/clickhouse
+      - ${VOLUME_BASE}/clickhouse-cluster/s1r2/logs:/var/log/clickhouse-server
+      - ./clickhouse/clickhouse-s1r2.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+    depends_on:
+      clickhouse-zk:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.102
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user admin --password 'cZgWD@tPYvTx^EZAWQ-_g5aY' --query 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Shard 2 Replica 1
+  clickhouse-s2r1:
+    restart: always
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-s2r1
+    environment:
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "8126:8123"
+      - "9012:9000"
+    volumes:
+      - ${VOLUME_BASE}/clickhouse-cluster/s2r1/data:/var/lib/clickhouse
+      - ${VOLUME_BASE}/clickhouse-cluster/s2r1/logs:/var/log/clickhouse-server
+      - ./clickhouse/clickhouse-s2r1.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+    depends_on:
+      clickhouse-zk:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.103
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user admin --password 'cZgWD@tPYvTx^EZAWQ-_g5aY' --query 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  # Shard 2 Replica 2
+  clickhouse-s2r2:
+    restart: always
+    image: clickhouse/clickhouse-server:latest
+    container_name: clickhouse-s2r2
+    environment:
+      CLICKHOUSE_USER: admin
+      CLICKHOUSE_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: 1
+    ports:
+      - "8127:8123"
+      - "9013:9000"
+    volumes:
+      - ${VOLUME_BASE}/clickhouse-cluster/s2r2/data:/var/lib/clickhouse
+      - ${VOLUME_BASE}/clickhouse-cluster/s2r2/logs:/var/log/clickhouse-server
+      - ./clickhouse/clickhouse-s2r2.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
+    depends_on:
+      clickhouse-zk:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.104
+    healthcheck:
+      test: ["CMD-SHELL", "clickhouse-client --user admin --password 'cZgWD@tPYvTx^EZAWQ-_g5aY' --query 'SELECT 1' || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

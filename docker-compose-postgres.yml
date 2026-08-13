@@ -1,0 +1,136 @@
+# PostgreSQL 主从复制（1主2从，基于流复制）
+# Master 端口：5434（避开 devtools 的 5432）
+# Slave 端口：5435、5436
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-postgres.yml up -d
+#   docker compose -f cluster/docker-compose-postgres.yml down
+#
+# 连接 Master: psql -h 127.0.0.1 -p 5434 -U postgres
+# 查看复制状态: SELECT * FROM pg_stat_replication;
+name: pg-cluster
+
+services:
+
+  pg-master:
+    restart: always
+    image: postgres:16-alpine
+    container_name: pg-master
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      POSTGRES_DB: mydb
+      POSTGRES_INITDB_ARGS: "--data-checksums"
+      PGDATA: /var/lib/postgresql/data/pgdata
+    command: >
+      postgres
+      -c wal_level=replica
+      -c max_wal_senders=5
+      -c max_replication_slots=5
+      -c hot_standby=on
+      -c archive_mode=on
+      -c archive_command='/bin/true'
+    ports:
+      - "5434:5432"
+    volumes:
+      - ${VOLUME_BASE}/pg-cluster/master:/var/lib/postgresql/data
+      - ${VOLUME_BASE}/pg-cluster/init:/docker-entrypoint-initdb.d
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.40
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  pg-slave-1:
+    restart: always
+    image: postgres:16-alpine
+    container_name: pg-slave-1
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+    command:
+      - bash
+      - -c
+      - |
+        until pg_isready -h pg-master -U postgres; do sleep 2; done
+        DATADIR=/var/lib/postgresql/data/pgdata
+        mkdir -p $$DATADIR
+        if [ ! -f $$DATADIR/PG_VERSION ]; then
+          rm -rf $$DATADIR/*
+          PGPASSWORD=$$PGPASSWORD pg_basebackup -h pg-master -U postgres -D $$DATADIR -Fp -Xs -P -R
+        fi
+        touch $$DATADIR/standby.signal
+        echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=cZgWD@tPYvTx^EZAWQ-_g5aY'" > $$DATADIR/postgresql.auto.conf
+        echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
+        chown -R postgres:postgres $$DATADIR
+        chmod 0700 $$DATADIR
+        exec gosu postgres postgres -D $$DATADIR
+    ports:
+      - "5435:5432"
+    volumes:
+      - ${VOLUME_BASE}/pg-cluster/slave-1:/var/lib/postgresql/data
+    depends_on:
+      pg-master:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.41
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  pg-slave-2:
+    restart: always
+    image: postgres:16-alpine
+    container_name: pg-slave-2
+    environment:
+      PGUSER: postgres
+      PGPASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+    command:
+      - bash
+      - -c
+      - |
+        until pg_isready -h pg-master -U postgres; do sleep 2; done
+        DATADIR=/var/lib/postgresql/data/pgdata
+        mkdir -p $$DATADIR
+        if [ ! -f $$DATADIR/PG_VERSION ]; then
+          rm -rf $$DATADIR/*
+          PGPASSWORD=$$PGPASSWORD pg_basebackup -h pg-master -U postgres -D $$DATADIR -Fp -Xs -P -R
+        fi
+        touch $$DATADIR/standby.signal
+        echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=cZgWD@tPYvTx^EZAWQ-_g5aY'" > $$DATADIR/postgresql.auto.conf
+        echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
+        chown -R postgres:postgres $$DATADIR
+        chmod 0700 $$DATADIR
+        exec gosu postgres postgres -D $$DATADIR
+    ports:
+      - "5436:5432"
+    volumes:
+      - ${VOLUME_BASE}/pg-cluster/slave-2:/var/lib/postgresql/data
+    depends_on:
+      pg-master:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.42
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

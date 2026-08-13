@@ -1,0 +1,129 @@
+# DevOps 工具：SonarQube, Camunda, WireMock, Mailpit
+# Usage: docker compose -f compose/devops.yml up -d
+# 注意：sonarqube 依赖 postgres（database project），camunda 依赖 mysql（database project）
+name: devops
+
+services:
+
+  sonarqube:
+    restart: always
+    image: sonarqube:latest
+    container_name: sonarqube
+    user: root
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://postgres:5432/sonarqube
+      SONAR_JDBC_USERNAME: postgres
+      SONAR_JDBC_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      SONAR_ES_BOOTSTRAP_CHECKS_DISABLE: "true"
+      # 禁用强制认证（允许匿名访问）
+      SONAR_FORCEAUTHENTICATION: "false"
+      # 禁用遥测
+      SONAR_TELEMETRY_ENABLE: "false"
+      SONAR_WEB_CONTEXT: /sonarqube
+      # HTTP 代理配置（根据实际代理地址修改）
+      HTTP_PROXY: ${HTTP_PROXY:-}
+      HTTPS_PROXY: ${HTTPS_PROXY:-}
+      NO_PROXY: localhost,127.0.0.1,postgres,172.18.0.0/16
+      # Java 代理配置
+      SONAR_WEB_JAVAADDITIONALOPTS: >-
+        -Dhttp.proxyHost=${PROXY_HOST:-}
+        -Dhttp.proxyPort=${PROXY_PORT:-8080}
+        -Dhttps.proxyHost=${PROXY_HOST:-}
+        -Dhttps.proxyPort=${PROXY_PORT:-8080}
+        -Dhttp.nonProxyHosts=localhost|127.0.0.1|postgres|172.18.*
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      # 本地绑定挂载（通过 init 脚本修复权限）
+      - ${VOLUME_BASE}/sonarqube/data:/opt/sonarqube/data
+      - ${VOLUME_BASE}/sonarqube/logs:/opt/sonarqube/logs
+      - ${VOLUME_BASE}/sonarqube/extensions:/opt/sonarqube/extensions
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        # 以 root 身份修复权限（使用 UID:GID）
+        chown -R 1000:0 /opt/sonarqube/data /opt/sonarqube/logs /opt/sonarqube/extensions
+        # 切换到 sonarqube 用户执行原始入口点
+        exec su -s /bin/bash sonarqube -c '/opt/sonarqube/docker/entrypoint.sh'
+    networks:
+      devops-network:
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9000/api/system/status | grep -q '\"status\":\"UP\"'"]
+      interval: 30s
+      timeout: 10s
+      retries: 10
+      start_period: 120s
+
+  # ─────────────────────────────────────────────
+  # 工作流引擎：camunda BPM 7
+  # 默认账号: demo / demo
+  # ─────────────────────────────────────────────
+
+  camunda:
+    restart: always
+    image: camunda/camunda-bpm-platform:latest
+    container_name: camunda
+    environment:
+      DB_DRIVER: com.mysql.cj.jdbc.Driver
+      DB_URL: jdbc:mysql://mysql:3306/camunda?useSSL=false&allowPublicKeyRetrieval=true
+      DB_USERNAME: root
+      DB_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      CAMUNDA_BPM_RUN_AUTH_ENABLED: "true"
+    networks:
+      devops-network:
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 --spider http://localhost:8080/engine-rest/engine || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+
+  # API Mock：wiremock
+  wiremock:
+    restart: always
+    image: wiremock/wiremock:latest
+    container_name: wiremock
+    ports:
+      - "8180:8080"    # HTTP（应用调用 Mock API）
+      - "8443:8443"    # HTTPS
+    volumes:
+      - ${VOLUME_BASE}/wiremock/mappings:/home/wiremock/mappings
+      - ${VOLUME_BASE}/wiremock/__files:/home/wiremock/__files
+    command: >
+      --verbose
+      --global-response-templating
+    networks:
+      devops-network:
+    healthcheck:
+      test: ["CMD-SHELL", "wget --no-verbose --tries=1 -O /dev/null http://localhost:8080/__admin/mappings || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # 邮件测试：mailpit
+  mailpit:
+    restart: always
+    image: axllent/mailpit:latest
+    container_name: mailpit
+    environment:
+      MP_WEBROOT: /mailpit
+    ports:
+      - "1025:1025"   # SMTP（应用发信）
+    networks:
+      devops-network:
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8025"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  devops-network:
+    name: devops-network
+    external: true

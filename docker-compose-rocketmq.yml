@@ -1,0 +1,201 @@
+# RocketMQ DLedger Cluster（2主2从，基于 Raft 自动选主）
+# NameServer 端口：9877、9878（避开 devtools 的 9876）
+# Broker 端口：10921、10922、10923、10924
+# Dashboard 端口：8680
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-rocketmq.yml up -d
+#   docker compose -f cluster/docker-compose-rocketmq.yml down
+#
+# Dashboard: http://localhost:8680
+# NameServer: localhost:9877;localhost:9878
+name: rocketmq-cluster
+
+services:
+
+  rocketmq-namesrv-1:
+    restart: always
+    image: apache/rocketmq:5.3.1
+    container_name: rocketmq-namesrv-c1
+    command: sh mqnamesrv
+    ports:
+      - "9877:9876"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq-cluster/namesrv-1/logs:/home/rocketmq/logs
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.90
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9876 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  rocketmq-namesrv-2:
+    restart: always
+    image: apache/rocketmq:5.3.1
+    container_name: rocketmq-namesrv-c2
+    command: sh mqnamesrv
+    ports:
+      - "9878:9876"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq-cluster/namesrv-2/logs:/home/rocketmq/logs
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.91
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 9876 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Broker Group A — Master + Slave
+  rocketmq-broker-a-master:
+    restart: always
+    image: apache/rocketmq:5.3.1
+    container_name: rocketmq-broker-a-m
+    command: >
+      sh mqbroker
+      -n rocketmq-namesrv-c1:9876;rocketmq-namesrv-c2:9876
+      -c /opt/rocketmq-5.3.1/conf/2m-2s-async/broker-a.properties
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m"
+    ports:
+      - "10921:10911"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-a-master/store:/home/rocketmq/store
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-a-master/logs:/home/rocketmq/logs
+    depends_on:
+      rocketmq-namesrv-1:
+        condition: service_healthy
+      rocketmq-namesrv-2:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.92
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 10911 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  rocketmq-broker-a-slave:
+    restart: always
+    image: apache/rocketmq:5.3.1
+    container_name: rocketmq-broker-a-s
+    command: >
+      sh mqbroker
+      -n rocketmq-namesrv-c1:9876;rocketmq-namesrv-c2:9876
+      -c /opt/rocketmq-5.3.1/conf/2m-2s-async/broker-a-s.properties
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m"
+    ports:
+      - "10922:10911"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-a-slave/store:/home/rocketmq/store
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-a-slave/logs:/home/rocketmq/logs
+    depends_on:
+      rocketmq-broker-a-master:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.93
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 10911 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  # Broker Group B — Master + Slave
+  rocketmq-broker-b-master:
+    restart: always
+    image: apache/rocketmq:5.3.1
+    container_name: rocketmq-broker-b-m
+    command: >
+      sh mqbroker
+      -n rocketmq-namesrv-c1:9876;rocketmq-namesrv-c2:9876
+      -c /opt/rocketmq-5.3.1/conf/2m-2s-async/broker-b.properties
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m"
+    ports:
+      - "10923:10911"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-b-master/store:/home/rocketmq/store
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-b-master/logs:/home/rocketmq/logs
+    depends_on:
+      rocketmq-namesrv-1:
+        condition: service_healthy
+      rocketmq-namesrv-2:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.94
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 10911 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  rocketmq-broker-b-slave:
+    restart: always
+    image: apache/rocketmq:5.3.1
+    container_name: rocketmq-broker-b-s
+    command: >
+      sh mqbroker
+      -n rocketmq-namesrv-c1:9876;rocketmq-namesrv-c2:9876
+      -c /opt/rocketmq-5.3.1/conf/2m-2s-async/broker-b-s.properties
+    environment:
+      JAVA_OPT_EXT: "-Xms256m -Xmx256m -Xmn128m"
+    ports:
+      - "10924:10911"
+    volumes:
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-b-slave/store:/home/rocketmq/store
+      - ${VOLUME_BASE}/rocketmq-cluster/broker-b-slave/logs:/home/rocketmq/logs
+    depends_on:
+      rocketmq-broker-b-master:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.95
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 10911 || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
+  rocketmq-cluster-dashboard:
+    restart: always
+    image: apacherocketmq/rocketmq-dashboard:latest
+    container_name: rocketmq-cluster-dashboard
+    environment:
+      JAVA_OPTS: >
+        -Drocketmq.namesrv.addr=rocketmq-namesrv-c1:9876;rocketmq-namesrv-c2:9876
+        -Dcom.rocketmq.sendMessageWithVIPChannel=false
+    ports:
+      - "8680:8080"
+    depends_on:
+      rocketmq-broker-a-master:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.96
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:8080/ || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

@@ -1,0 +1,187 @@
+# MySQL 主从复制（1主2从，基于 GTID）
+# Master 端口：3307（避开 devtools 的 3306）
+# Slave 端口：3308、3309
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-mysql.yml up -d
+#   docker compose -f cluster/docker-compose-mysql.yml down
+#
+# 连接 Master: mysql -h 127.0.0.1 -P 3307 -u root -p'cZgWD@tPYvTx^EZAWQ-_g5aY'
+# 查看复制状态: SHOW REPLICA STATUS\G
+name: mysql-cluster
+
+x-mysql-password: &mysql-pwd "cZgWD@tPYvTx^EZAWQ-_g5aY"
+
+services:
+
+  mysql-master:
+    restart: always
+    image: mysql:8.4
+    container_name: mysql-master
+    environment:
+      MYSQL_ROOT_PASSWORD: *mysql-pwd
+      MYSQL_DATABASE: mydb
+    command:
+      - bash
+      - -c
+      - |
+        # write init SQL that creates repl user (runs only on first init)
+        cat > /docker-entrypoint-initdb.d/01-repl.sql <<'SQL'
+        CREATE USER IF NOT EXISTS 'repl'@'%' IDENTIFIED WITH mysql_native_password BY 'cZgWD@tPYvTx^EZAWQ-_g5aY';
+        GRANT REPLICATION SLAVE ON *.* TO 'repl'@'%';
+        FLUSH PRIVILEGES;
+        SQL
+        exec docker-entrypoint.sh mysqld \
+          --server-id=1 \
+          --log-bin=mysql-bin \
+          --binlog-format=ROW \
+          --gtid-mode=ON \
+          --enforce-gtid-consistency=ON \
+          --log-slave-updates=ON \
+          --character-set-server=utf8mb4 \
+          --collation-server=utf8mb4_unicode_ci \
+          --max-connections=200 \
+          --mysql-native-password=ON \
+          --authentication-policy=mysql_native_password
+    ports:
+      - "3307:3306"
+    volumes:
+      - ${VOLUME_BASE}/mysql-cluster/master:/var/lib/mysql
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.30
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pcZgWD@tPYvTx^EZAWQ-_g5aY"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mysql-slave-1:
+    restart: always
+    image: mysql:8.4
+    container_name: mysql-slave-1
+    environment:
+      MYSQL_ROOT_PASSWORD: *mysql-pwd
+    command:
+      - bash
+      - -c
+      - |
+        # run entrypoint in background to initialize MySQL
+        docker-entrypoint.sh mysqld \
+          --server-id=2 \
+          --log-bin=mysql-bin \
+          --binlog-format=ROW \
+          --gtid-mode=ON \
+          --enforce-gtid-consistency=ON \
+          --log-slave-updates=ON \
+          --read-only=ON \
+          --character-set-server=utf8mb4 \
+          --collation-server=utf8mb4_unicode_ci \
+          --mysql-native-password=ON \
+          --authentication-policy=mysql_native_password &
+        MYSQL_PID=$$!
+        # wait for MySQL to be ready
+        until mysqladmin ping -h localhost -u root -p"$$MYSQL_ROOT_PASSWORD" --silent 2>/dev/null; do sleep 2; done
+        sleep 5
+        # check if replication is already configured
+        REPLICA_STATUS=$$(mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -N -e "SHOW REPLICA STATUS" 2>/dev/null)
+        if [ -z "$$REPLICA_STATUS" ]; then
+          echo ">>> Configuring replication on slave-1..."
+          mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "
+            STOP REPLICA;
+            CHANGE REPLICATION SOURCE TO
+              SOURCE_HOST='mysql-master',
+              SOURCE_PORT=3306,
+              SOURCE_USER='repl',
+              SOURCE_PASSWORD='cZgWD@tPYvTx^EZAWQ-_g5aY',
+              SOURCE_AUTO_POSITION=1;
+            START REPLICA;
+          "
+          echo ">>> slave-1 replication configured"
+        fi
+        mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "SET GLOBAL super_read_only=ON;" || true
+        wait $$MYSQL_PID
+    ports:
+      - "3308:3306"
+    volumes:
+      - ${VOLUME_BASE}/mysql-cluster/slave-1:/var/lib/mysql
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.31
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pcZgWD@tPYvTx^EZAWQ-_g5aY"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+  mysql-slave-2:
+    restart: always
+    image: mysql:8.4
+    container_name: mysql-slave-2
+    environment:
+      MYSQL_ROOT_PASSWORD: *mysql-pwd
+    command:
+      - bash
+      - -c
+      - |
+        docker-entrypoint.sh mysqld \
+          --server-id=3 \
+          --log-bin=mysql-bin \
+          --binlog-format=ROW \
+          --gtid-mode=ON \
+          --enforce-gtid-consistency=ON \
+          --log-slave-updates=ON \
+          --read-only=ON \
+          --character-set-server=utf8mb4 \
+          --collation-server=utf8mb4_unicode_ci \
+          --mysql-native-password=ON \
+          --authentication-policy=mysql_native_password &
+        MYSQL_PID=$$!
+        until mysqladmin ping -h localhost -u root -p"$$MYSQL_ROOT_PASSWORD" --silent 2>/dev/null; do sleep 2; done
+        sleep 5
+        REPLICA_STATUS=$$(mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -N -e "SHOW REPLICA STATUS" 2>/dev/null)
+        if [ -z "$$REPLICA_STATUS" ]; then
+          echo ">>> Configuring replication on slave-2..."
+          mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "
+            STOP REPLICA;
+            CHANGE REPLICATION SOURCE TO
+              SOURCE_HOST='mysql-master',
+              SOURCE_PORT=3306,
+              SOURCE_USER='repl',
+              SOURCE_PASSWORD='cZgWD@tPYvTx^EZAWQ-_g5aY',
+              SOURCE_AUTO_POSITION=1;
+            START REPLICA;
+          "
+          echo ">>> slave-2 replication configured"
+        fi
+        mysql -u root -p"$$MYSQL_ROOT_PASSWORD" -e "SET GLOBAL super_read_only=ON;" || true
+        wait $$MYSQL_PID
+    ports:
+      - "3309:3306"
+    volumes:
+      - ${VOLUME_BASE}/mysql-cluster/slave-2:/var/lib/mysql
+    depends_on:
+      mysql-master:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.32
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-pcZgWD@tPYvTx^EZAWQ-_g5aY"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16

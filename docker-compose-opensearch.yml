@@ -1,0 +1,142 @@
+# OpenSearch Cluster（3节点 + Dashboards）
+# 端口：9210、9211、9212（避开 devtools 的 9200）
+# Dashboards 端口：5602（避开 devtools 的 5601）
+#
+# Usage:
+#   docker compose -f cluster/docker-compose-opensearch.yml up -d
+#   docker compose -f cluster/docker-compose-opensearch.yml down
+#
+# 查看集群状态: curl http://localhost:9210/_cluster/health?pretty
+# Dashboards: http://localhost:5602
+name: opensearch-cluster
+
+services:
+
+  opensearch-node-1:
+    restart: always
+    image: opensearchproject/opensearch:2
+    container_name: opensearch-node-1
+    environment:
+      cluster.name: opensearch-cluster
+      node.name: opensearch-node-1
+      discovery.seed_hosts: opensearch-node-2,opensearch-node-3
+      cluster.initial_cluster_manager_nodes: opensearch-node-1,opensearch-node-2,opensearch-node-3
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      http.port: 9210
+      transport.port: 9310
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9210:9210"
+    volumes:
+      - ${VOLUME_BASE}/opensearch-cluster/node-1:/usr/share/opensearch/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.70
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9210/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  opensearch-node-2:
+    restart: always
+    image: opensearchproject/opensearch:2
+    container_name: opensearch-node-2
+    environment:
+      cluster.name: opensearch-cluster
+      node.name: opensearch-node-2
+      discovery.seed_hosts: opensearch-node-1,opensearch-node-3
+      cluster.initial_cluster_manager_nodes: opensearch-node-1,opensearch-node-2,opensearch-node-3
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      http.port: 9211
+      transport.port: 9311
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9211:9211"
+    volumes:
+      - ${VOLUME_BASE}/opensearch-cluster/node-2:/usr/share/opensearch/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.71
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9211/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  opensearch-node-3:
+    restart: always
+    image: opensearchproject/opensearch:2
+    container_name: opensearch-node-3
+    environment:
+      cluster.name: opensearch-cluster
+      node.name: opensearch-node-3
+      discovery.seed_hosts: opensearch-node-1,opensearch-node-2
+      cluster.initial_cluster_manager_nodes: opensearch-node-1,opensearch-node-2,opensearch-node-3
+      bootstrap.memory_lock: "true"
+      OPENSEARCH_JAVA_OPTS: "-Xms512m -Xmx512m"
+      DISABLE_SECURITY_PLUGIN: "true"
+      DISABLE_INSTALL_DEMO_CONFIG: "true"
+      http.port: 9212
+      transport.port: 9312
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    ports:
+      - "9212:9212"
+    volumes:
+      - ${VOLUME_BASE}/opensearch-cluster/node-3:/usr/share/opensearch/data
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.72
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:9212/_cluster/health || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  opensearch-cluster-dashboards:
+    restart: always
+    image: opensearchproject/opensearch-dashboards:2
+    container_name: opensearch-cluster-dashboards
+    environment:
+      OPENSEARCH_HOSTS: '["http://opensearch-node-1:9210","http://opensearch-node-2:9211","http://opensearch-node-3:9212"]'
+      DISABLE_SECURITY_DASHBOARDS_PLUGIN: "true"
+    ports:
+      - "5602:5601"
+    depends_on:
+      opensearch-node-1:
+        condition: service_healthy
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.73
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sf http://localhost:5601/api/status || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+networks:
+  cluster-network:
+    name: cluster-network
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.21.0.0/16
