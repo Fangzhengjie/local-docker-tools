@@ -1,5 +1,5 @@
 # 数据库：PostgreSQL, Redis, MySQL, MSSQL, MongoDB, Cassandra, OpenSearch
-# Usage: docker compose -f compose/database.yml up -d
+# Usage: docker compose -f docker-compose-database.yml up -d
 name: database
 
 services:

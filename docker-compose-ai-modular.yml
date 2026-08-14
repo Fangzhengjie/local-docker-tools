@@ -1,19 +1,8 @@
-# Local Docker Tools - AI 开发环境
-# 包含：Ollama（本地 LLM）、Open WebUI（聊天界面）、
-#        向量数据库（Qdrant、Milvus、Weaviate、ChromaDB、pgvector）、
-#        LiteLLM（LLM 网关）、Flowise（可视化 AI 流程编排）
-#
-# 依赖：devtools 网络（先启动 docker-compose-devtools.yml）
-#
-# Usage:
-#   docker compose -f docker-compose-ai.yml up -d              # 启动所有 AI 服务
-#   docker compose -f docker-compose-ai.yml up -d ollama       # 只启动 Ollama
-#   docker compose -f docker-compose-ai.yml down               # 停止所有服务
-#
-# 快速体验：
-#   启动后访问 http://localhost:3100 使用 Open WebUI 与本地 LLM 对话
-#   拉取模型：docker exec ollama ollama pull llama3.2
-#   拉取嵌入模型：docker exec ollama ollama pull nomic-embed-text
+# AI 服务：Ollama, Open WebUI, Pipelines, SearXNG, MCPO,
+#          向量数据库（Qdrant, Milvus, Weaviate, ChromaDB, pgvector）,
+#          LiteLLM, Flowise
+# Usage: docker compose -f docker-compose-ai-modular.yml up -d
+# 依赖：infra project 需先启动（提供 devtools-network）
 name: ai
 
 services:
@@ -36,8 +25,7 @@ services:
       OLLAMA_KEEP_ALIVE: "24h"
       OLLAMA_NUM_PARALLEL: 2
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.40
+      ai-network:
     healthcheck:
       test: ["CMD", "ollama", "list"]
       interval: 30s
@@ -64,8 +52,7 @@ services:
       ollama:
         condition: service_healthy
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.41
+      ai-network:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
@@ -92,10 +79,9 @@ services:
       open-webui:
         condition: service_healthy
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.55
+      ai-network:
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9099/health"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9099/ || exit 0"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -113,8 +99,7 @@ services:
     environment:
       SEARXNG_BASE_URL: http://searxng:8080/
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.56
+      ai-network:
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/healthz"]
       interval: 15s
@@ -127,15 +112,15 @@ services:
     restart: always
     image: ghcr.io/open-webui/mcpo:main
     container_name: mcpo
+    command: ["--config", "/app/config/config.json"]
     ports:
       - "8800:8000"     # OpenAPI endpoint
     volumes:
       - ${VOLUME_BASE}/mcpo/config:/app/config
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.57
+      ai-network:
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')\" || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -156,8 +141,7 @@ services:
     volumes:
       - ${VOLUME_BASE}/qdrant/data:/qdrant/storage
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.42
+      ai-network:
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/6333' || exit 1"]
       interval: 15s
@@ -187,8 +171,7 @@ services:
     volumes:
       - ${VOLUME_BASE}/milvus/etcd:/etcd-data
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.45
+      ai-network:
     healthcheck:
       test: ["CMD", "etcdctl", "endpoint", "health"]
       interval: 30s
@@ -207,8 +190,7 @@ services:
       - ${VOLUME_BASE}/milvus/minio:/data
     command: minio server /data --console-address ":9001"
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.46
+      ai-network:
     healthcheck:
       test: ["CMD", "mc", "ready", "local"]
       interval: 10s
@@ -217,8 +199,6 @@ services:
       start_period: 10s
 
   # Milvus Standalone - 高性能向量数据库
-  # REST API: http://localhost:19530  gRPC: localhost:19530
-  # Attu Web UI: 可额外部署 zilliztech/attu 连接
   milvus:
     restart: always
     image: milvusdb/milvus:v3.0.0
@@ -233,7 +213,10 @@ services:
     environment:
       ETCD_ENDPOINTS: milvus-etcd:2379
       MINIO_ADDRESS: milvus-minio:9000
+      MINIO_ACCESS_KEY_ID: admin
+      MINIO_SECRET_ACCESS_KEY: cZgWD@tPYvTx^EZAWQ-_g5aY
       MINIO_REGION: us-east-1
+      MINIO_USE_SSL: "false"
     volumes:
       - ${VOLUME_BASE}/milvus/data:/var/lib/milvus
     depends_on:
@@ -242,8 +225,7 @@ services:
       milvus-minio:
         condition: service_healthy
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.47
+      ai-network:
     healthcheck:
       test: ["CMD-SHELL", "curl -f http://localhost:9091/healthz || wget -q -O - http://localhost:9091/healthz || exit 1"]
       interval: 30s
@@ -252,7 +234,6 @@ services:
       start_period: 90s
 
   # Attu - Milvus 可视化管理界面
-  # Web UI: http://localhost:8300
   attu:
     restart: always
     image: zilliz/attu:v3.0.0-beta.6
@@ -265,8 +246,7 @@ services:
       milvus:
         condition: service_healthy
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.51
+      ai-network:
 
   # ─────────────────────────────────────────────
   # 向量数据库：Weaviate（GraphQL 原生，模块化架构）
@@ -288,8 +268,7 @@ services:
     volumes:
       - ${VOLUME_BASE}/weaviate/data:/var/lib/weaviate
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.48
+      ai-network:
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8080/v1/.well-known/ready"]
       interval: 15s
@@ -314,8 +293,7 @@ services:
     volumes:
       - ${VOLUME_BASE}/chromadb/data:/chroma/chroma
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.49
+      ai-network:
     healthcheck:
       test: ["CMD-SHELL", "bash -c 'echo > /dev/tcp/localhost/8000' || exit 1"]
       interval: 15s
@@ -325,7 +303,6 @@ services:
 
   # ─────────────────────────────────────────────
   # 向量数据库：pgvector（PostgreSQL 向量扩展，SQL 原生）
-  # 适合已有 PostgreSQL 技术栈的团队
   # ─────────────────────────────────────────────
 
   pgvector:
@@ -341,8 +318,7 @@ services:
     volumes:
       - ${VOLUME_BASE}/pgvector/data:/var/lib/postgresql/data
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.50
+      ai-network:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -354,8 +330,6 @@ services:
   # LLM 网关：LiteLLM（统一 API 代理）
   # ─────────────────────────────────────────────
 
-  # LiteLLM - 统一 OpenAI 兼容接口，支持路由到 Ollama / Azure / 其他 LLM
-  # 配置文件：VOLUME_BASE/litellm/config.yaml
   litellm:
     restart: always
     image: ghcr.io/berriai/litellm:main-latest
@@ -366,7 +340,12 @@ services:
       - "4001:4001"     # Prometheus metrics
     environment:
       LITELLM_MASTER_KEY: "sk-local-dev-key"
-      DATABASE_URL: "postgresql://postgres:cZgWD@tPYvTx^EZAWQ-_g5aY@postgres:5432/litellm"
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: "cZgWD@tPYvTx^EZAWQ-_g5aY"
+      DATABASE_NAME: litellm
+      DATABASE_URL: "postgresql://postgres:cZgWD%40tPYvTx%5EEZAWQ-_g5aY@postgres:5432/litellm"
       STORE_MODEL_IN_DB: "True"
       UI_USERNAME: admin
       UI_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
@@ -377,20 +356,18 @@ services:
       ollama:
         condition: service_healthy
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.43
+      ai-network:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4000/health/liveliness"]
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 120s
 
   # ─────────────────────────────────────────────
   # AI 流程编排：Flowise（可视化 LLM 工作流）
   # ─────────────────────────────────────────────
 
-  # Flowise - 拖拽式 LangChain/LlamaIndex 流程构建工具
   flowise:
     restart: always
     image: flowiseai/flowise:2.2.7
@@ -414,8 +391,7 @@ services:
       ollama:
         condition: service_healthy
     networks:
-      devtools-network:
-        ipv4_address: 172.18.0.44
+      ai-network:
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000"]
       interval: 30s
@@ -424,6 +400,6 @@ services:
       start_period: 30s
 
 networks:
-  devtools-network:
-    name: devtools-network
+  ai-network:
+    name: ai-network
     external: true

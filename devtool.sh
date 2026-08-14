@@ -1,2 +1,2 @@
 # bash
-docker compose -p devtools -f docker-compose-devtools.yml up -d --pull always
+docker compose -p devtools -f docker-compose-infra.yml -f docker-compose-database.yml -f docker-compose-messaging.yml -f docker-compose-observability.yml -f docker-compose-storage.yml -f docker-compose-bigdata.yml -f docker-compose-devops.yml up -d --pull always

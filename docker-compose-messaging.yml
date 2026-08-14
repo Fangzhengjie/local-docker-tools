@@ -1,5 +1,5 @@
 # 消息队列：Kafka, RabbitMQ, RocketMQ
-# Usage: docker compose -f compose/messaging.yml up -d
+# Usage: docker compose -f docker-compose-messaging.yml up -d
 name: messaging
 
 services:

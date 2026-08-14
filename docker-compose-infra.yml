@@ -1,5 +1,5 @@
 # 基础设施：Nginx 反向代理 + DNS
-# Usage: docker compose -f compose/infra.yml up -d
+# Usage: docker compose -f docker-compose-infra.yml up -d
 # 注意：infra 创建所有网络。其他 project 以 external: true 引用。
 name: infra
 

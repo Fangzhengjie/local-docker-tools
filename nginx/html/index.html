@@ -33,33 +33,33 @@
       <div class="grid">
         <div class="card"><h3>Workflow and DevOps</h3>
           <a href="/camunda/">Camunda 8</a><a href="/sonarqube/">SonarQube</a>
-          <a href="http://localhost:8084">Jenkins</a><a href="http://localhost:8086">Nexus</a>
-          <a href="http://localhost:3001">Gitea</a>
+          <a href="#" data-port="8084">Jenkins</a><a href="#" data-port="8086">Nexus</a>
+          <a href="#" data-port="3001">Gitea</a>
         </div>
         <div class="card"><h3>Data and analytics</h3>
           <a href="/hadoop/">Hadoop</a><a href="/hive/">Hive</a><a href="/spark/">Spark</a>
-          <a href="/flink/">Flink</a><a href="http://localhost:8089">Trino</a>
-          <a href="http://localhost:8091">Superset</a><a href="http://localhost:8083">Airflow</a>
+          <a href="/flink/">Flink</a><a href="#" data-port="8089">Trino</a>
+          <a href="#" data-port="8091">Superset</a><a href="#" data-port="8083">Airflow</a>
         </div>
         <div class="card"><h3>AI and ML</h3>
-          <a href="http://localhost:3100">Open WebUI</a><a href="http://localhost:8889">JupyterLab</a>
-          <a href="http://localhost:5000">MLflow</a><a href="http://localhost:4000">LiteLLM</a>
-          <a href="http://localhost:8300">Attu</a>
+          <a href="#" data-port="3100">Open WebUI</a><a href="#" data-port="8889">JupyterLab</a>
+          <a href="#" data-port="5000">MLflow</a><a href="#" data-port="4000">LiteLLM</a>
+          <a href="#" data-port="8300">Attu</a>
         </div>
         <div class="card"><h3>Operations and security</h3>
           <a href="/grafana/">Grafana</a><a href="/prometheus/">Prometheus</a>
           <a href="/jaeger/">Jaeger</a><a href="/openobserve/">OpenObserve</a>
-          <a href="http://localhost:3002">Uptime Kuma</a><a href="http://localhost:8200">Vault</a>
-          <a href="http://localhost:8181">Keycloak</a>
+          <a href="#" data-port="3002">Uptime Kuma</a><a href="#" data-port="8200">Vault</a>
+          <a href="#" data-port="8181">Keycloak</a>
         </div>
         <div class="card"><h3>Messaging and integration</h3>
           <a href="/kafka-ui/">Kafka UI</a><a href="/rabbitmq/">RabbitMQ</a>
-          <a href="/rocketmq/">RocketMQ</a><a href="http://localhost:8085">Debezium Connect</a>
+          <a href="/rocketmq/">RocketMQ</a><a href="#" data-port="8085">Debezium Connect</a>
         </div>
         <div class="card"><h3>Storage and utilities</h3>
           <a href="/minio/">MinIO</a><a href="/mailpit/">Mailpit</a>
-          <a href="http://localhost:5050">pgAdmin</a><a href="http://localhost:5540">RedisInsight</a>
-          <a href="http://localhost:8087">SFTPGo</a>
+          <a href="#" data-port="5050">pgAdmin</a><a href="#" data-port="5540">RedisInsight</a>
+          <a href="#" data-port="8087">SFTPGo</a>
         </div>
       </div>
     </section>
@@ -71,5 +71,10 @@
     </section>
   </main>
   <footer>local-docker-tools</footer>
+  <script>
+    document.querySelectorAll("[data-port]").forEach(function (link) {
+      link.href = location.protocol + "//" + location.hostname + ":" + link.dataset.port;
+    });
+  </script>
 </body>
 </html>

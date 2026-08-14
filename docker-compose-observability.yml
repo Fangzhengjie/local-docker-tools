@@ -1,5 +1,5 @@
 # 可观测性：Prometheus, Grafana, Jaeger, OpenObserve
-# Usage: docker compose -f compose/observability.yml up -d
+# Usage: docker compose -f docker-compose-observability.yml up -d
 name: observability
 
 services:

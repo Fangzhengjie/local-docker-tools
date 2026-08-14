@@ -152,7 +152,7 @@ make devtools-logs         # 查看所有服务日志
 make devtools-log svc=postgres  # 查看单个服务日志
 
 # ── 按需启动指定服务 ─────────────────────────────────────────
-# docker compose -f docker-compose-devtools.yml up -d nginx postgres redis  # 只启动指定服务
+# docker compose -f docker-compose-infra.yml -f docker-compose-database.yml up -d nginx postgres redis  # 只启动指定服务
 
 # ── ai（AI 开发环境，独立 compose）───────────────────────────
 make ai-up                 # 启动 AI 服务

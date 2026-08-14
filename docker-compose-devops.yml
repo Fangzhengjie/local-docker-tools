@@ -1,5 +1,5 @@
 # DevOps 工具：SonarQube, Camunda, WireMock, Mailpit
-# Usage: docker compose -f compose/devops.yml up -d
+# Usage: docker compose -f docker-compose-devops.yml up -d
 # 注意：sonarqube 依赖 postgres（database project），camunda 依赖 mysql（database project）
 name: devops
 

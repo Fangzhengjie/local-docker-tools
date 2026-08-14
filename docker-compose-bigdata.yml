@@ -1,5 +1,5 @@
 # 大数据：ZooKeeper, Hadoop, Hive, Spark, Flink, ClickHouse
-# Usage: docker compose -f compose/bigdata.yml up -d
+# Usage: docker compose -f docker-compose-bigdata.yml up -d
 name: bigdata
 
 services:

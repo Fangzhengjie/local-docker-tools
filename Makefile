@@ -10,8 +10,8 @@ CLUSTER_SERVICES := redis-cluster redis-sentinel mysql postgres kafka mongodb op
 # ─────────────────────────────────────────────
 # 变量
 # ─────────────────────────────────────────────
-DEVTOOLS_COMPOSE = docker compose -p devtools -f docker-compose-devtools.yml
-TOOLS_COMPOSE = docker compose -p tools -f compose/tools.yml
+DEVTOOLS_COMPOSE = docker compose -p devtools -f docker-compose-infra.yml -f docker-compose-database.yml -f docker-compose-messaging.yml -f docker-compose-observability.yml -f docker-compose-storage.yml -f docker-compose-bigdata.yml -f docker-compose-devops.yml
+TOOLS_COMPOSE = docker compose -p tools -f docker-compose-tools.yml
 
 # ─────────────────────────────────────────────
 # 初始化
@@ -87,7 +87,7 @@ bash:
 #        LiteLLM、Flowise
 # 依赖：devtools（共享 devtools-network）
 # ─────────────────────────────────────────────
-AI_COMPOSE = docker compose -p ai -f docker-compose-ai.yml
+AI_COMPOSE = docker compose -p ai -f docker-compose-ai-modular.yml
 
 ## 启动 AI 所有服务（依赖 devtools 网络）
 ai-up: init
@@ -129,7 +129,7 @@ ollama-pull:
 #       make cluster-redis-logs   查看日志
 # ─────────────────────────────────────────────
 define CLUSTER_COMPOSE_CMD
-docker compose --env-file .env -p cluster-$(1) -f cluster/docker-compose-$(1).yml
+docker compose --env-file .env -p cluster-$(1) -f docker-compose-$(1).yml
 endef
 
 ## 启动指定集群，用法: make cluster-redis-up

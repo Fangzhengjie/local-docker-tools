@@ -1,5 +1,5 @@
 # 存储：MinIO, CosmosDB, Azure Storage (Azurite)
-# Usage: docker compose -f compose/storage.yml up -d
+# Usage: docker compose -f docker-compose-storage.yml up -d
 name: storage
 
 services:
