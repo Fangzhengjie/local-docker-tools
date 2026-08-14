@@ -28,7 +28,7 @@ services:
   # Hadoop NameNode（HDFS，Hive 依赖）
   hadoop:
     restart: always
-    image: apache/hadoop:latest
+    image: apache/hadoop:3
     container_name: hadoop
     user: root
     environment:
@@ -74,7 +74,7 @@ services:
   # Hive Metastore + HiveServer2（依赖 hadoop）
   hive:
     restart: always
-    image: apache/hive:latest
+    image: apache/hive:4.0.1
     container_name: hive
     environment:
       SERVICE_NAME: hiveserver2

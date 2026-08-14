@@ -39,6 +39,15 @@
 | mongodb | localhost:27017 | MongoDB 7 |
 | cosmosdb | https://localhost:8081 | Cosmos DB 模拟器 |
 
+### workflow（工作流）
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| Camunda 8 Operate | http://localhost:8088/operate | 流程运维与监控 |
+| Camunda 8 Tasklist | http://localhost:8088/tasklist | 用户任务管理 |
+| Camunda 8 REST API | http://localhost:8088/v2/ | Zeebe REST API |
+| Camunda 8 Zeebe | localhost:26500 | gRPC 网关 |
+
 ### storage（文件存储）
 
 | 服务 | 地址 | 说明 |
@@ -95,6 +104,32 @@
 | litellm | http://localhost:4000 | LLM API 网关（OpenAI 兼容代理） |
 | flowise | http://localhost:3101 | 可视化 LLM 工作流编排（admin/admin123） |
 
+### tools（数据工程、分析和运维扩展）
+
+| 服务 | 地址 | 说明 |
+|------|------|------|
+| trino | http://localhost:8089 | 统一 SQL 查询 |
+| superset | http://localhost:8091 | BI 数据可视化 |
+| airflow | http://localhost:8083 | 数据任务编排 |
+| dbt | — | dbt PostgreSQL CLI 容器 |
+| jupyter | http://localhost:8889 | Python / Spark 分析 |
+| mlflow | http://localhost:5000 | ML 实验和模型管理 |
+| pgadmin | http://localhost:5050 | PostgreSQL 管理 |
+| redisinsight | http://localhost:5540 | Redis 管理 |
+| alertmanager | http://localhost:9093 | Prometheus 告警 |
+| node-exporter | http://localhost:9100 | 主机指标 |
+| cadvisor | http://localhost:8082 | 容器指标 |
+| otel-collector | localhost:14317 / 14318 | OTLP traces、metrics、logs |
+| keycloak | http://localhost:8181 | OAuth2 / OIDC 统一认证 |
+| vault | http://localhost:8200 | 密钥和凭据管理 |
+| jenkins | http://localhost:8084 | CI/CD 自动化 |
+| nexus | http://localhost:8086 | Maven/npm/PyPI/Docker 制品仓库 |
+| gitea | http://localhost:3001 | 私有 Git 服务 |
+| uptime-kuma | http://localhost:3002 | 服务可用性监控 |
+| debezium-connect | http://localhost:8085 | CDC 数据同步 |
+| sftpgo | http://localhost:8087 | SFTP/Web 文件服务 |
+| clamav | localhost:3310 | 文件病毒扫描 |
+
 ## 启动方式
 
 服务按功能分组为独立 profile，按需启动以节省内存。
@@ -127,6 +162,12 @@ make ai-pull-up            # 拉取最新镜像并启动
 make ai-logs               # 查看 AI 服务日志
 make ai-log svc=ollama     # 查看单个 AI 服务日志
 make ollama-pull           # 拉取默认模型 llama3.2（model=xxx 可指定）
+
+# ── tools（数据工程、分析和运维扩展）────────────────────────
+make tools-up              # 启动扩展工具
+make tools-down            # 停止扩展工具
+make tools-ps              # 查看扩展工具状态
+make tools-logs            # 查看扩展工具日志
 
 # ── cluster（集群模式，每种集群独立 compose）─────────────────
 # 可选: redis mysql postgres kafka mongodb opensearch
@@ -1000,4 +1041,3 @@ Flowise 提供拖拽式界面构建 LangChain / LlamaIndex 工作流，支持：
    - Ollama Base URL：`http://ollama:11434`
    - Qdrant URL：`http://qdrant:6333`
 4. 点击右上角保存 → 上传文档 → 开始对话
-

@@ -163,7 +163,8 @@
 | 8180 | wiremock | devtools | HTTP Mock（host→8080） |
 | 8443 | wiremock | devtools | HTTPS Mock |
 | *(nginx)* | sonarqube | devtools | 通过 nginx `/sonarqube` 访问 |
-| *(nginx)* | camunda | devtools | 通过 nginx `/camunda` 访问 |
+| 26500 | camunda | devtools | Camunda 8 Zeebe gRPC |
+| 8088 | camunda | devtools | Camunda 8 REST API / Operate / Tasklist |
 | *(nginx)* | kafka-ui | devtools | 通过 nginx `/kafka-ui` 访问 |
 | *(nginx)* | rocketmq-dashboard | devtools | 通过 nginx `/rocketmq` 访问 |
 | *(nginx)* | rabbitmq mgmt | devtools | 通过 nginx `/rabbitmq` 访问 |
@@ -274,8 +275,9 @@
 | `/rocketmq/` | RocketMQ Dashboard | rocketmq-dashboard:8082 | ❌ rewrite 剥离 |
 | `/opensearch/` | OpenSearch Dashboards | opensearch-dashboards:5601 | ✅ `SERVER_BASEPATH` |
 | `/sonarqube/` | SonarQube | sonarqube:9000 | ✅ `SONAR_WEB_CONTEXT` |
-| `/camunda/` | Camunda Cockpit | camunda:8080 | ✅ 自带 `/camunda` 前缀 |
-| `/engine-rest/` | Camunda REST API | camunda:8080 | ✅ 自带前缀 |
+| `http://localhost:8088/operate` | Camunda 8 Operate | camunda:8080 | 统一发行镜像 |
+| `http://localhost:8088/tasklist` | Camunda 8 Tasklist | camunda:8080 | 统一发行镜像 |
+| `http://localhost:8088/v2/` | Camunda 8 REST API | camunda:8080 | Zeebe REST API |
 | `/mailpit/` | Mailpit | mailpit:8025 | ✅ `MP_WEBROOT` |
 | `/minio/` | MinIO Console | minio:9001 | ❌ rewrite 剥离 |
 | `/spark/` | Spark Master | spark:8080 | ❌ rewrite 剥离 |
@@ -286,3 +288,28 @@
 | `/hive/` | Hive Web UI | hive:10002 | ❌ rewrite 剥离 |
 
 > **注意**：标记 ❌ 的服务使用 nginx `rewrite` 剥离路径前缀再转发，部分 SPA 应用的前端静态资源引用可能仍使用绝对根路径（`/js/...`），此时建议直接用端口或子域名方式访问。
+
+### 扩展工具 — `compose/tools.yml`
+
+| 端口 | 服务 | 说明 |
+|---|---|---|
+| 8089 | trino | Trino Web UI |
+| 8091 | superset | BI 可视化 |
+| 8083 | airflow | 数据任务编排 |
+| 8889 | jupyter | JupyterLab |
+| 5000 | mlflow | ML 实验管理 |
+| 5050 | pgadmin | PostgreSQL 管理 |
+| 5540 | redisinsight | Redis 管理 |
+| 9093 | alertmanager | Prometheus 告警 |
+| 9100 | node-exporter | 主机指标 |
+| 8082 | cadvisor | 容器指标 |
+| 14317 / 14318 | otel-collector | OTLP gRPC / HTTP |
+| 8181 | keycloak | OAuth2 / OIDC |
+| 8200 | vault | 密钥和凭据管理 |
+| 8084 / 50000 | jenkins | Web UI / Agent |
+| 8086 | nexus | 制品仓库 |
+| 3001 / 2222 | gitea | Git Web / SSH |
+| 3002 | uptime-kuma | 服务可用性监控 |
+| 8085 | debezium-connect | Kafka Connect CDC |
+| 8087 / 2022 | sftpgo | Web / SFTP |
+| 3310 | clamav | 病毒扫描服务 |

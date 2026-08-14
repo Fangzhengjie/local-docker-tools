@@ -21,10 +21,11 @@ services:
     networks:
       observability-network:
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:9090/-/healthy"]
+      test: ["CMD-SHELL", "promtool check healthy --url=http://localhost:9090/prometheus"]
       interval: 15s
       timeout: 5s
       retries: 5
+      start_period: 15s
 
   grafana:
     restart: always

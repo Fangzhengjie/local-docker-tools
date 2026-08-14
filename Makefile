@@ -1,6 +1,7 @@
 CLUSTER_SERVICES := redis-cluster redis-sentinel mysql postgres kafka mongodb opensearch rabbitmq rocketmq clickhouse minio cassandra
 
 .PHONY: init devtools-up devtools-down devtools-ps devtools-pull devtools-pull-up devtools-logs devtools-log \
+        tools-up tools-down tools-ps tools-logs \
         restart exec bash \
         ai-up ai-down ai-ps ai-pull-up ai-logs ai-log ollama-pull \
         $(foreach s,$(CLUSTER_SERVICES),cluster-$(s)-up cluster-$(s)-down cluster-$(s)-ps cluster-$(s)-logs) \
@@ -10,6 +11,7 @@ CLUSTER_SERVICES := redis-cluster redis-sentinel mysql postgres kafka mongodb op
 # 变量
 # ─────────────────────────────────────────────
 DEVTOOLS_COMPOSE = docker compose -p devtools -f docker-compose-devtools.yml
+TOOLS_COMPOSE = docker compose -p tools -f compose/tools.yml
 
 # ─────────────────────────────────────────────
 # 初始化
@@ -50,6 +52,22 @@ devtools-logs:
 ## 查看单个服务日志，用法: make devtools-log svc=postgres
 devtools-log:
 	$(DEVTOOLS_COMPOSE) logs -f $(svc)
+
+## 启动扩展工具：Trino、Superset、Airflow、dbt、Jupyter、MLflow、监控和 Keycloak
+tools-up: init
+	$(TOOLS_COMPOSE) up -d
+
+## 停止扩展工具
+tools-down:
+	$(TOOLS_COMPOSE) down
+
+## 查看扩展工具状态
+tools-ps:
+	$(TOOLS_COMPOSE) ps
+
+## 查看扩展工具日志
+tools-logs:
+	$(TOOLS_COMPOSE) logs -f
 
 ## 重启单个容器，用法: make restart svc=postgres
 restart:

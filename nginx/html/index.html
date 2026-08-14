@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Local Docker Tools</title>
+  <style>
+    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
+    body { margin: 0; color: #172033; background: #f4f7fb; }
+    header { padding: 32px 20px; color: white; background: linear-gradient(135deg,#172554,#2563eb); }
+    header h1 { margin: 0; font-size: 30px; }
+    header p { margin: 8px 0 0; opacity: .82; }
+    main { max-width: 1180px; margin: auto; padding: 24px 16px 40px; }
+    section { margin: 22px 0; }
+    h2 { font-size: 18px; margin: 0 0 12px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 14px; }
+    .card { padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: white; box-shadow: 0 2px 8px #0f172a0d; }
+    .card h3 { margin: 0 0 10px; font-size: 16px; }
+    a { display: block; padding: 5px 0; color: #1d4ed8; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    small { color: #64748b; }
+    footer { padding: 20px; color: #64748b; text-align: center; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>Local Docker Tools</h1>
+    <p>Development infrastructure, data engineering, AI and operations portal</p>
+  </header>
+  <main>
+    <section>
+      <h2>Web applications</h2>
+      <div class="grid">
+        <div class="card"><h3>Workflow and DevOps</h3>
+          <a href="/camunda/">Camunda 8</a><a href="/sonarqube/">SonarQube</a>
+          <a href="http://localhost:8084">Jenkins</a><a href="http://localhost:8086">Nexus</a>
+          <a href="http://localhost:3001">Gitea</a>
+        </div>
+        <div class="card"><h3>Data and analytics</h3>
+          <a href="/hadoop/">Hadoop</a><a href="/hive/">Hive</a><a href="/spark/">Spark</a>
+          <a href="/flink/">Flink</a><a href="http://localhost:8089">Trino</a>
+          <a href="http://localhost:8091">Superset</a><a href="http://localhost:8083">Airflow</a>
+        </div>
+        <div class="card"><h3>AI and ML</h3>
+          <a href="http://localhost:3100">Open WebUI</a><a href="http://localhost:8889">JupyterLab</a>
+          <a href="http://localhost:5000">MLflow</a><a href="http://localhost:4000">LiteLLM</a>
+          <a href="http://localhost:8300">Attu</a>
+        </div>
+        <div class="card"><h3>Operations and security</h3>
+          <a href="/grafana/">Grafana</a><a href="/prometheus/">Prometheus</a>
+          <a href="/jaeger/">Jaeger</a><a href="/openobserve/">OpenObserve</a>
+          <a href="http://localhost:3002">Uptime Kuma</a><a href="http://localhost:8200">Vault</a>
+          <a href="http://localhost:8181">Keycloak</a>
+        </div>
+        <div class="card"><h3>Messaging and integration</h3>
+          <a href="/kafka-ui/">Kafka UI</a><a href="/rabbitmq/">RabbitMQ</a>
+          <a href="/rocketmq/">RocketMQ</a><a href="http://localhost:8085">Debezium Connect</a>
+        </div>
+        <div class="card"><h3>Storage and utilities</h3>
+          <a href="/minio/">MinIO</a><a href="/mailpit/">Mailpit</a>
+          <a href="http://localhost:5050">pgAdmin</a><a href="http://localhost:5540">RedisInsight</a>
+          <a href="http://localhost:8087">SFTPGo</a>
+        </div>
+      </div>
+    </section>
+    <section>
+      <h2>Direct service endpoints</h2>
+      <div class="card">
+        <small>Database and API ports are documented in PORTS.md. Credentials are intentionally not displayed on this public page.</small>
+      </div>
+    </section>
+  </main>
+  <footer>local-docker-tools</footer>
+</body>
+</html>

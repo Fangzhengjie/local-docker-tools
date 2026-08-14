@@ -81,7 +81,7 @@ services:
     networks:
       ai-network:
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9099/health"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:9099/ || exit 0"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -112,6 +112,7 @@ services:
     restart: always
     image: ghcr.io/open-webui/mcpo:main
     container_name: mcpo
+    command: ["--config", "/app/config/config.json"]
     ports:
       - "8800:8000"     # OpenAPI endpoint
     volumes:
@@ -119,7 +120,7 @@ services:
     networks:
       ai-network:
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8000/health"]
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/docs')\" || exit 1"]
       interval: 15s
       timeout: 5s
       retries: 5
@@ -212,7 +213,10 @@ services:
     environment:
       ETCD_ENDPOINTS: milvus-etcd:2379
       MINIO_ADDRESS: milvus-minio:9000
+      MINIO_ACCESS_KEY_ID: admin
+      MINIO_SECRET_ACCESS_KEY: cZgWD@tPYvTx^EZAWQ-_g5aY
       MINIO_REGION: us-east-1
+      MINIO_USE_SSL: "false"
     volumes:
       - ${VOLUME_BASE}/milvus/data:/var/lib/milvus
     depends_on:
@@ -336,7 +340,12 @@ services:
       - "4001:4001"     # Prometheus metrics
     environment:
       LITELLM_MASTER_KEY: "sk-local-dev-key"
-      DATABASE_URL: "postgresql://postgres:cZgWD@tPYvTx^EZAWQ-_g5aY@postgres:5432/litellm"
+      DATABASE_HOST: postgres
+      DATABASE_PORT: "5432"
+      DATABASE_USERNAME: postgres
+      DATABASE_PASSWORD: "cZgWD@tPYvTx^EZAWQ-_g5aY"
+      DATABASE_NAME: litellm
+      DATABASE_URL: "postgresql://postgres:cZgWD%40tPYvTx%5EEZAWQ-_g5aY@postgres:5432/litellm"
       STORE_MODEL_IN_DB: "True"
       UI_USERNAME: admin
       UI_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
@@ -353,7 +362,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 5
-      start_period: 30s
+      start_period: 120s
 
   # ─────────────────────────────────────────────
   # AI 流程编排：Flowise（可视化 LLM 工作流）
