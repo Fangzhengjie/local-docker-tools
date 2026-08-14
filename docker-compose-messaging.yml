@@ -4,6 +4,7 @@ name: messaging
 
 services:
 
+  # 作用：Kafka：事件流、消息队列和日志管道
   kafka:
     restart: always
     image: confluentinc/cp-kafka:latest
@@ -33,6 +34,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：Kafka：事件流、消息队列和日志管道
   kafka-ui:
     restart: always
     image: provectuslabs/kafka-ui:latest
@@ -55,6 +57,7 @@ services:
       start_period: 10s
 
   # Apache Pulsar（单机开发模式）
+  # 作用：Pulsar：多租户消息与事件流平台
   pulsar:
       restart: always
       image: apachepulsar/pulsar:3.3.2
@@ -75,6 +78,7 @@ services:
         start_period: 60s
 
   # RabbitMQ（AMQP，含 Management UI）
+  # 作用：RabbitMQ：任务队列和可靠消息代理
   rabbitmq:
     restart: always
     image: rabbitmq:management
@@ -97,6 +101,7 @@ services:
       start_period: 30s
 
   # RocketMQ NameServer
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-namesrv:
     restart: always
     image: apache/rocketmq:latest
@@ -116,6 +121,7 @@ services:
       start_period: 20s
 
   # RocketMQ Broker
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-broker:
     restart: always
     image: apache/rocketmq:latest
@@ -143,6 +149,7 @@ services:
       start_period: 30s
 
   # RocketMQ Dashboard
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-dashboard:
     restart: always
     image: apacherocketmq/rocketmq-dashboard:latest

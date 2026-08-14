@@ -4,6 +4,7 @@ name: database
 
 services:
 
+  # 作用：PostgreSQL：关系型数据库，提供事务数据存储
   postgres:
     restart: always
     image: postgres:alpine
@@ -41,6 +42,7 @@ services:
       retries: 5
       start_period: 10s
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis:
     restart: always
     image: redis:alpine
@@ -58,6 +60,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：MySQL：关系型数据库，提供应用数据存储
   mysql:
     restart: always
     image: mysql:latest
@@ -84,6 +87,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：SQL Server：关系型数据库
   mssql:
     restart: always
     image: mcr.microsoft.com/azure-sql-edge:latest
@@ -106,6 +110,7 @@ services:
       retries: 5
       start_period: 60s
 
+  # 作用：MongoDB：文档型数据库
   mongodb:
     restart: always
     image: mongo:latest
@@ -126,6 +131,7 @@ services:
       retries: 5
       start_period: 20s
 
+  # 作用：Cassandra：分布式宽列数据库
   cassandra:
     restart: always
     image: cassandra:latest
@@ -158,6 +164,7 @@ services:
   # 搜索：opensearch + opensearch-dashboards
   # ─────────────────────────────────────────────
 
+  # 作用：初始化容器：创建集群拓扑、用户或元数据
   opensearch-init:
     image: alpine:latest
     container_name: opensearch-init
@@ -168,6 +175,7 @@ services:
     networks:
       database-network:
 
+  # 作用：OpenSearch：全文搜索、日志索引和检索
   opensearch:
     restart: always
     image: opensearchproject/opensearch:latest
@@ -202,6 +210,7 @@ services:
       timeout: 10s
       retries: 5
 
+  # 作用：OpenSearch：全文搜索、日志索引和检索
   opensearch-dashboards:
     restart: always
     image: opensearchproject/opensearch-dashboards:latest

@@ -1,0 +1,41 @@
+# Camunda 7 ç‹¬ç«‹éƒ¨ç½²ï¼Œä¸å½±å“çŽ°æœ‰ Camunda 8
+# Usage: docker compose -f docker-compose-camunda7.yml up -d
+name: camunda7
+
+services:
+
+  # 作用：camunda7 容器，提供该服务或集群节点能力
+  camunda7:
+    restart: unless-stopped
+    image: camunda/camunda-bpm-platform:run-7.24.0
+    container_name: camunda7
+    environment:
+      SERVER_SERVLET_CONTEXT_PATH: /camunda7
+      CAMUNDA_BPM_RUN_AUTH_ENABLED: "false"
+      CAMUNDA_BPM_DATABASE_TYPE: postgres
+      CAMUNDA_BPM_DATABASE_SCHEMA_UPDATE: true
+      DB_DRIVER: org.postgresql.Driver
+      DB_URL: jdbc:postgresql://postgres:5432/camunda7
+      DB_USERNAME: camunda7
+      DB_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY
+      JAVA_OPTS: -Xms256m -Xmx512m
+    volumes:
+      - ${VOLUME_BASE}/camunda7/data:/camunda/data
+      - ${VOLUME_BASE}/camunda7/logs:/camunda/logs
+    networks:
+      devops-network:
+      database-network:
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS http://localhost:8080/camunda7/engine-rest/engine >/dev/null"]
+      interval: 20s
+      timeout: 10s
+      retries: 10
+      start_period: 60s
+
+networks:
+  devops-network:
+    name: devops-network
+    external: true
+  database-network:
+    name: database-network
+    external: true

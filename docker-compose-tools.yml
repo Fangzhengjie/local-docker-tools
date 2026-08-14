@@ -1,6 +1,7 @@
 name: tools
 
 services:
+  # 作用：Trino：跨数据源的分布式 SQL 查询引擎
   trino:
     image: trinodb/trino:latest
     container_name: trino
@@ -13,6 +14,7 @@ services:
     healthcheck:
       disable: true
 
+  # 作用：Superset：数据分析、探索和 BI 仪表盘
   superset:
     image: apache/superset:latest
     container_name: superset
@@ -30,6 +32,7 @@ services:
     depends_on:
       - trino
 
+  # 作用：Airflow：数据任务编排、依赖管理和定时调度
   airflow:
     image: apache/airflow:latest
     container_name: airflow
@@ -45,6 +48,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：dbt：SQL 数据转换、模型构建和数据测试
   dbt:
     image: ghcr.io/dbt-labs/dbt-postgres:1.9.0
     container_name: dbt
@@ -55,6 +59,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：JupyterLab：交互式 Python、数据分析和实验环境
   jupyter:
     image: quay.io/jupyter/scipy-notebook:latest
     container_name: jupyter
@@ -66,6 +71,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：MLflow：机器学习实验、模型和制品管理
   mlflow:
     image: ghcr.io/mlflow/mlflow:v2.22.0
     container_name: mlflow
@@ -75,6 +81,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：pgAdmin：PostgreSQL 图形化管理工具
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
@@ -87,6 +94,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redisinsight:
     image: redis/redisinsight:latest
     container_name: redisinsight
@@ -96,6 +104,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Alertmanager：告警聚合、抑制和通知
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
@@ -107,12 +116,14 @@ services:
     networks:
       - infra-network
 
+  # 作用：Node Exporter：采集主机 CPU、内存和磁盘指标
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
     networks:
       - infra-network
 
+  # 作用：cAdvisor：采集容器资源使用指标
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
@@ -124,6 +135,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：OpenTelemetry Collector：接收、处理和转发遥测数据
   otel-collector:
     image: otel/opentelemetry-collector-contrib:latest
     container_name: otel-collector
@@ -136,6 +148,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Keycloak：统一身份认证、用户管理和单点登录
   keycloak:
     image: quay.io/keycloak/keycloak:latest
     container_name: keycloak
@@ -149,6 +162,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Vault：保存和签发密钥、令牌及敏感配置
   vault:
     image: hashicorp/vault:latest
     container_name: vault
@@ -162,6 +176,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Jenkins：CI/CD 构建、测试和部署流水线
   jenkins:
     image: jenkins/jenkins:lts
     container_name: jenkins
@@ -176,6 +191,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Nexus：Maven、npm、Docker 等软件制品仓库
   nexus:
     image: sonatype/nexus3:latest
     container_name: nexus
@@ -187,6 +203,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Gitea：Git 代码托管、仓库和轻量协作
   gitea:
     image: gitea/gitea:latest
     container_name: gitea
@@ -200,6 +217,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Uptime Kuma：HTTP、TCP 等服务可用性监控
   uptime-kuma:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
@@ -209,6 +227,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：Debezium：捕获数据库变更并发布 CDC 事件
   debezium-connect:
     image: quay.io/debezium/connect:latest
     container_name: debezium-connect
@@ -227,6 +246,7 @@ services:
       - infra-network
       - messaging-network
 
+  # 作用：SFTPGo：SFTP、FTP 和 Web 文件传输
   sftpgo:
     image: drakkan/sftpgo:latest
     container_name: sftpgo
@@ -239,6 +259,7 @@ services:
     networks:
       - infra-network
 
+  # 作用：ClamAV：上传文件病毒扫描
   clamav:
     image: clamav/clamav:latest
     container_name: clamav

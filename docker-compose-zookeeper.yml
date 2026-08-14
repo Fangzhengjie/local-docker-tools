@@ -1,6 +1,7 @@
 name: zookeeper-cluster
 
 services:
+  # 作用：ZooKeeper：为分布式服务提供选主、协调和配置管理
   zookeeper1:
     image: zookeeper:3.9
     container_name: zookeeper1
@@ -23,6 +24,7 @@ services:
       retries: 5
       start_period: 10s
 
+  # 作用：ZooKeeper：为分布式服务提供选主、协调和配置管理
   zookeeper2:
     image: zookeeper:3.9
     container_name: zookeeper2
@@ -45,6 +47,7 @@ services:
       retries: 5
       start_period: 10s
 
+  # 作用：ZooKeeper：为分布式服务提供选主、协调和配置管理
   zookeeper3:
     image: zookeeper:3.9
     container_name: zookeeper3

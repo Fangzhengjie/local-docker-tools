@@ -5,6 +5,7 @@ name: infra
 
 services:
 
+  # 作用：Nginx：统一 HTTPS 入口和反向代理
   nginx:
     restart: always
     image: nginx:alpine
@@ -30,6 +31,7 @@ services:
 
   # DNS 服务：供 Android 模拟器解析 *.local.dev
   # 模拟器启动参数: emulator -avd <名> -dns-server 10.0.2.2
+  # 作用：dnsmasq：本地容器域名解析
   dnsmasq:
     restart: always
     image: andyshinn/dnsmasq:latest

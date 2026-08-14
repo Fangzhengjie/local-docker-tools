@@ -11,6 +11,7 @@ name: kafka-cluster
 
 services:
 
+  # 作用：Kafka：事件流、消息队列和日志管道
   kafka-cluster-1:
     restart: always
     image: confluentinc/cp-kafka:7.7.1
@@ -43,6 +44,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：Kafka：事件流、消息队列和日志管道
   kafka-cluster-2:
     restart: always
     image: confluentinc/cp-kafka:7.7.1
@@ -75,6 +77,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：Kafka：事件流、消息队列和日志管道
   kafka-cluster-3:
     restart: always
     image: confluentinc/cp-kafka:7.7.1
@@ -107,6 +110,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：Kafka：事件流、消息队列和日志管道
   kafka-cluster-ui:
     restart: always
     image: provectuslabs/kafka-ui:v0.7.2

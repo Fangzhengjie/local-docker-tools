@@ -11,6 +11,7 @@ name: redis-cluster
 
 services:
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-cluster-1:
     restart: always
     image: redis:7-alpine
@@ -37,6 +38,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-cluster-2:
     restart: always
     image: redis:7-alpine
@@ -63,6 +65,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-cluster-3:
     restart: always
     image: redis:7-alpine
@@ -89,6 +92,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-cluster-4:
     restart: always
     image: redis:7-alpine
@@ -115,6 +119,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-cluster-5:
     restart: always
     image: redis:7-alpine
@@ -141,6 +146,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-cluster-6:
     restart: always
     image: redis:7-alpine
@@ -168,6 +174,7 @@ services:
       retries: 5
 
   # 集群初始化（一次性任务，创建 3主3从拓扑）
+  # 作用：初始化容器：创建集群拓扑、用户或元数据
   redis-cluster-init:
     image: redis:7-alpine
     container_name: redis-cluster-init

@@ -11,6 +11,7 @@ name: redis-sentinel
 
 services:
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-sentinel-master:
     restart: always
     image: redis:7-alpine
@@ -34,6 +35,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-sentinel-slave-1:
     restart: always
     image: redis:7-alpine
@@ -61,6 +63,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-sentinel-slave-2:
     restart: always
     image: redis:7-alpine
@@ -88,6 +91,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-sentinel-1:
     restart: always
     image: redis:7-alpine
@@ -123,6 +127,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-sentinel-2:
     restart: always
     image: redis:7-alpine
@@ -154,6 +159,7 @@ services:
       timeout: 3s
       retries: 5
 
+  # 作用：Redis：缓存、会话、分布式锁和高性能键值存储
   redis-sentinel-3:
     restart: always
     image: redis:7-alpine

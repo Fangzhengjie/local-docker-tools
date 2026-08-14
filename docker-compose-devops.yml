@@ -5,6 +5,7 @@ name: devops
 
 services:
 
+  # 作用：SonarQube：代码质量、漏洞和静态分析
   sonarqube:
     restart: always
     image: sonarqube:25.12.0.117093-community
@@ -66,6 +67,7 @@ services:
   # Tasklist:       http://localhost:8088/tasklist
   # ─────────────────────────────────────────────
 
+  # 作用：Camunda 8：云原生 BPMN 流程编排和任务管理
   camunda:
     restart: always
     image: camunda/camunda:8.9.15
@@ -100,6 +102,7 @@ services:
     volumes:
       - camunda-zeebe-data:/usr/local/camunda/data
 
+  # 作用：Elasticsearch：搜索引擎及 Camunda 8 数据存储
   elasticsearch:
     restart: always
     image: elasticsearch:8.17.4
@@ -126,6 +129,7 @@ services:
       start_period: 60s
 
   # API Mock：wiremock
+  # 作用：WireMock：模拟外部 HTTP API，支持联调和测试
   wiremock:
     restart: always
     image: wiremock/wiremock:latest
@@ -149,6 +153,7 @@ services:
       start_period: 10s
 
   # 邮件测试：mailpit
+  # 作用：Mailpit：捕获并预览本地开发邮件
   mailpit:
     restart: always
     image: axllent/mailpit:latest

@@ -13,6 +13,7 @@ name: rocketmq-cluster
 
 services:
 
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-namesrv-1:
     restart: always
     image: apache/rocketmq:5.3.1
@@ -32,6 +33,7 @@ services:
       retries: 5
       start_period: 10s
 
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-namesrv-2:
     restart: always
     image: apache/rocketmq:5.3.1
@@ -52,6 +54,7 @@ services:
       start_period: 10s
 
   # Broker Group A — Master + Slave
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-broker-a-master:
     restart: always
     image: apache/rocketmq:5.3.1
@@ -82,6 +85,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-broker-a-slave:
     restart: always
     image: apache/rocketmq:5.3.1
@@ -111,6 +115,7 @@ services:
       start_period: 30s
 
   # Broker Group B — Master + Slave
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-broker-b-master:
     restart: always
     image: apache/rocketmq:5.3.1
@@ -141,6 +146,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-broker-b-slave:
     restart: always
     image: apache/rocketmq:5.3.1
@@ -169,6 +175,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：RocketMQ：高吞吐分布式消息队列
   rocketmq-cluster-dashboard:
     restart: always
     image: apacherocketmq/rocketmq-dashboard:latest

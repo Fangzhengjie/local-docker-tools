@@ -6,73 +6,135 @@
   <link rel="icon" type="image/svg+xml" href="/favicon.svg">
   <title>Local Docker Tools</title>
   <style>
-    :root { color-scheme: light; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; }
-    body { margin: 0; color: #172033; background: #f4f7fb; }
-    header { padding: 32px 20px; color: white; background: linear-gradient(135deg,#172554,#2563eb); }
-    header h1 { margin: 0; font-size: 30px; }
-    header p { margin: 8px 0 0; opacity: .82; }
-    main { max-width: 1180px; margin: auto; padding: 24px 16px 40px; }
-    section { margin: 22px 0; }
-    h2 { font-size: 18px; margin: 0 0 12px; }
-    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(250px,1fr)); gap: 14px; }
-    .card { padding: 16px; border: 1px solid #e2e8f0; border-radius: 12px; background: white; box-shadow: 0 2px 8px #0f172a0d; }
-    .card h3 { margin: 0 0 10px; font-size: 16px; }
-    a { display: block; padding: 5px 0; color: #1d4ed8; text-decoration: none; }
-    a:hover { text-decoration: underline; }
-    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
-    th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
-    th { color: #475569; }
-    code { color: #0f172a; word-break: break-all; }
-    small { color: #64748b; }
-    footer { padding: 20px; color: #64748b; text-align: center; font-size: 12px; }
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; --ink: #12233f; --muted: #64748b; --line: #e4eaf3; --blue: #2563eb; --surface: #fff; }
+    * { box-sizing: border-box; }
+    body { margin: 0; color: var(--ink); background: #f5f8fc; }
+    header { position: relative; overflow: hidden; padding: 48px 24px 42px; color: white; background: radial-gradient(circle at 84% 18%, #4f8cff 0, transparent 28%), linear-gradient(120deg, #10234a 0%, #1d4ed8 100%); }
+    header::after { position: absolute; right: -80px; bottom: -130px; width: 360px; height: 360px; border: 1px solid #ffffff30; border-radius: 50%; box-shadow: 0 0 0 28px #ffffff0d, 0 0 0 58px #ffffff08; content: ""; }
+    .hero { position: relative; z-index: 1; max-width: 1180px; margin: auto; }
+    .eyebrow { margin: 0 0 12px; color: #bfdbfe; font-size: 12px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; }
+    header h1 { margin: 0; font-size: clamp(30px, 5vw, 48px); letter-spacing: -.04em; }
+    header p { max-width: 650px; margin: 12px 0 22px; color: #dbeafe; font-size: 16px; }
+    .hero-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+    .hero-meta span { padding: 7px 11px; border: 1px solid #ffffff35; border-radius: 999px; color: #eff6ff; background: #ffffff14; font-size: 12px; }
+    main { max-width: 1180px; margin: auto; padding: 30px 20px 54px; }
+    section { margin: 0 0 30px; }
+    .section-title { display: flex; align-items: end; justify-content: space-between; gap: 16px; margin: 0 0 14px; }
+    h2 { margin: 0; font-size: 21px; letter-spacing: -.02em; }
+    .section-title small { color: var(--muted); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit,minmax(260px,1fr)); gap: 16px; }
+    .card { padding: 19px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 8px 24px #12305b0b; }
+    .service-card { position: relative; display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 7px; transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+    .service-card:hover { border-color: #b9cdf6; box-shadow: 0 14px 30px #12305b18; transform: translateY(-3px); }
+    .service-card h3 { grid-column: 1 / -1; }
+    .card h3 { display: flex; align-items: center; gap: 10px; margin: 0 0 7px; font-size: 15px; }
+    .card h3::before { display: inline-grid; width: 28px; height: 28px; place-items: center; border-radius: 9px; color: #1d4ed8; background: #eaf1ff; content: "↗"; font-size: 15px; font-weight: 800; }
+    .service-card:nth-child(2) h3::before { color: #047857; background: #dcfce7; }
+    .service-card:nth-child(3) h3::before { color: #7c3aed; background: #f3e8ff; }
+    .service-card:nth-child(4) h3::before { color: #c2410c; background: #ffedd5; }
+    .service-card:nth-child(5) h3::before { color: #be123c; background: #ffe4e6; }
+    .service-card:nth-child(6) h3::before { color: #0369a1; background: #e0f2fe; }
+    .service-card a { display: flex; align-items: center; justify-content: space-between; gap: 7px; min-width: 0; padding: 9px 10px; border: 1px solid #edf1f7; border-radius: 9px; color: #244675; background: linear-gradient(145deg,#fff,#f8fbff); text-decoration: none; font-size: 12px; white-space: nowrap; }
+    .service-card a::before { flex: 0 0 6px; width: 6px; height: 6px; border-radius: 50%; background: #60a5fa; box-shadow: 0 0 0 3px #dbeafe; content: ""; }
+    .service-card a::after { margin-left: auto; }
+    .service-card a:hover { border-color: #bfd2f5; color: #1d4ed8; background: #f1f5ff; box-shadow: 0 4px 10px #2563eb12; transform: translateY(-1px); }
+    .optional-card a { gap: 6px; }
+    .optional-card a .tag { margin-left: auto; }
+    .tag { padding: 3px 6px; border: 1px solid #dbeafe; border-radius: 999px; color: #2563eb; background: #eff6ff; font-size: 10px; font-weight: 700; }
+    a::after { color: #93a4bd; content: "›"; font-size: 18px; line-height: 12px; }
+    .table-card { overflow: hidden; padding: 0; }
+    .table-card > small { display: block; padding: 16px 16px 0; }
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; min-width: 620px; border-collapse: collapse; font-size: 13px; }
+    th, td { padding: 13px 16px; border-bottom: 1px solid var(--line); text-align: left; vertical-align: top; }
+    th { color: #52637c; background: linear-gradient(180deg,#f8faff,#f3f7fd); font-size: 11px; letter-spacing: .06em; text-transform: uppercase; }
+    tr:last-child td { border-bottom: 0; }
+    tbody tr:nth-child(even) { background: #fcfdff; }
+    tbody tr:hover { background: #f1f6ff; }
+    .table-card td:first-child { color: #17345f; font-weight: 700; }
+    .table-card td:first-child::before { display: inline-block; width: 6px; height: 6px; margin: 0 8px 2px 0; border-radius: 50%; background: #60a5fa; content: ""; box-shadow: 0 0 0 3px #dbeafe; }
+    .table-card td code { display: inline-block; max-width: 100%; padding: 5px 8px; border: 1px solid #e4ebf5; border-radius: 7px; background: #f7faff; }
+    .table-card td:nth-child(2) code { color: #1d4ed8; background: #eff6ff; }
+    .table-card td:nth-child(3) code, .table-card td:nth-child(4) code { color: #334155; }
+    code { color: #20385f; word-break: break-all; }
+    td code { padding: 3px 6px; border-radius: 5px; background: #f1f5f9; }
+    .note { display: block; padding: 13px 16px; border-top: 1px solid var(--line); color: var(--muted); font-size: 12px; }
+    footer { padding: 22px; border-top: 1px solid var(--line); color: var(--muted); background: #fff; text-align: center; font-size: 12px; }
+    @media (max-width: 640px) { header { padding: 36px 20px; } main { padding: 24px 14px 40px; } .section-title { align-items: start; flex-direction: column; gap: 4px; } .card { padding: 16px; } .service-card { grid-template-columns: 1fr; } .service-card h3 { grid-column: auto; } }
   </style>
 </head>
 <body>
   <header>
+    <div class="hero">
+    <p class="eyebrow">Local development platform</p>
     <h1>Local Docker Tools</h1>
-    <p>Development infrastructure, data engineering, AI and operations portal</p>
+    <p>统一管理开发环境中的基础设施、数据平台、AI 服务与运维工具。</p>
+    <div class="hero-meta"><span>Web Console</span><span>Data &amp; AI Ready</span><span>Host: <script>document.write(location.hostname)</script></span></div>
+    </div>
   </header>
   <main>
     <section>
-      <h2>Web applications</h2>
+      <div class="section-title"><h2>Web applications</h2><small>选择服务进入控制台</small></div>
       <div class="grid">
-        <div class="card"><h3>Workflow and DevOps</h3>
-          <a href="/camunda/">Camunda 8</a><a href="/sonarqube/">SonarQube</a>
-          <a href="/jenkins/">Jenkins</a><a href="/nexus/">Nexus</a>
-          <a href="/gitea/">Gitea</a>
+        <div class="card service-card"><h3>Workflow and DevOps</h3>
+          <a href="/camunda/admin/setup" target="_blank" rel="noopener noreferrer">Camunda 8</a><a href="/camunda7/" target="_blank" rel="noopener noreferrer">Camunda 7</a>
+          <a href="/sonarqube/" target="_blank" rel="noopener noreferrer">SonarQube</a>
+          <a href="/jenkins/" target="_blank" rel="noopener noreferrer">Jenkins</a><a href="/nexus/" target="_blank" rel="noopener noreferrer">Nexus</a>
+          <a href="/gitea/" target="_blank" rel="noopener noreferrer">Gitea</a>
         </div>
-        <div class="card"><h3>Data and analytics</h3>
-          <a href="/hadoop/">Hadoop</a><a href="/hive/">Hive</a><a href="/spark/">Spark</a>
-          <a href="/flink/">Flink</a><a href="/trino/">Trino</a>
-          <a href="/superset/">Superset</a><a href="/airflow/">Airflow</a>
+        <div class="card service-card"><h3>Data and analytics</h3>
+          <a href="/hadoop/" target="_blank" rel="noopener noreferrer">Hadoop</a><a href="/hive/" target="_blank" rel="noopener noreferrer">Hive</a><a href="/spark/" target="_blank" rel="noopener noreferrer">Spark</a>
+          <a href="/flink/" target="_blank" rel="noopener noreferrer">Flink</a><a href="/trino/" target="_blank" rel="noopener noreferrer">Trino</a>
+          <a href="/superset/" target="_blank" rel="noopener noreferrer">Superset</a><a href="/airflow/" target="_blank" rel="noopener noreferrer">Airflow</a>
         </div>
-        <div class="card"><h3>AI and ML</h3>
-          <a href="/open-webui/">Open WebUI</a><a href="/jupyter/">JupyterLab</a>
-          <a href="/mlflow/">MLflow</a><a href="/litellm/">LiteLLM</a>
-          <a href="/attu/">Attu</a>
+        <div class="card service-card"><h3>AI and ML</h3>
+          <a href="/open-webui/" target="_blank" rel="noopener noreferrer">Open WebUI</a><a href="/jupyter/" target="_blank" rel="noopener noreferrer">JupyterLab</a>
+          <a href="/mlflow/" target="_blank" rel="noopener noreferrer">MLflow</a><a href="/litellm/" target="_blank" rel="noopener noreferrer">LiteLLM</a>
+          <a href="/attu/" target="_blank" rel="noopener noreferrer">Attu</a>
         </div>
-        <div class="card"><h3>Operations and security</h3>
-          <a href="/grafana/">Grafana</a><a href="/prometheus/">Prometheus</a>
-          <a href="/jaeger/">Jaeger</a><a href="/openobserve/">OpenObserve</a>
-          <a href="/uptime-kuma/">Uptime Kuma</a><a href="/vault/">Vault</a>
-          <a href="/keycloak/">Keycloak</a>
+        <div class="card service-card"><h3>Operations and security</h3>
+          <a href="/grafana/" target="_blank" rel="noopener noreferrer">Grafana</a><a href="/prometheus/" target="_blank" rel="noopener noreferrer">Prometheus</a>
+          <a href="/jaeger/" target="_blank" rel="noopener noreferrer">Jaeger</a><a href="/openobserve/" target="_blank" rel="noopener noreferrer">OpenObserve</a>
+          <a href="/uptime-kuma/" target="_blank" rel="noopener noreferrer">Uptime Kuma</a><a href="/vault/" target="_blank" rel="noopener noreferrer">Vault</a>
+          <a href="/keycloak/" target="_blank" rel="noopener noreferrer">Keycloak</a>
         </div>
-        <div class="card"><h3>Messaging and integration</h3>
-          <a href="/kafka-ui/">Kafka UI</a><a href="/rabbitmq/">RabbitMQ</a>
-          <a href="/rocketmq/">RocketMQ</a><a href="/pulsar/">Pulsar</a>
-          <a href="/debezium/connectors">Debezium Connect API</a>
+        <div class="card service-card"><h3>Messaging and integration</h3>
+          <a href="/kafka-ui/" target="_blank" rel="noopener noreferrer">Kafka UI</a><a href="/rabbitmq/" target="_blank" rel="noopener noreferrer">RabbitMQ</a>
+          <a href="/rocketmq/" target="_blank" rel="noopener noreferrer">RocketMQ</a><a href="/pulsar/" target="_blank" rel="noopener noreferrer">Pulsar</a>
+          <a href="/debezium/connectors" target="_blank" rel="noopener noreferrer">Debezium Connect API</a>
         </div>
-        <div class="card"><h3>Storage and utilities</h3>
-          <a href="/minio/">MinIO</a><a href="/mailpit/">Mailpit</a>
-          <a href="/pgadmin/">pgAdmin</a><a href="/redisinsight/">RedisInsight</a>
-          <a href="/sftpgo/">SFTPGo</a>
+        <div class="card service-card"><h3>Storage and utilities</h3>
+          <a href="/minio/" target="_blank" rel="noopener noreferrer">MinIO</a><a href="/mailpit/" target="_blank" rel="noopener noreferrer">Mailpit</a>
+          <a href="/pgadmin/" target="_blank" rel="noopener noreferrer">pgAdmin</a><a href="/redisinsight/" target="_blank" rel="noopener noreferrer">RedisInsight</a>
+          <a href="/sftpgo/" target="_blank" rel="noopener noreferrer">SFTPGo</a>
         </div>
       </div>
     </section>
     <section>
-      <h2>Default credentials</h2>
-      <div class="card">
+      <div class="section-title"><h2>Optional enterprise tools</h2><small>已加入配置，当前未部署</small></div>
+      <div class="grid">
+        <div class="card service-card optional-card"><h3>Performance and testing</h3>
+          <a href="https://k6.io/" target="_blank" rel="noopener noreferrer">Grafana k6 <span class="tag">压测</span></a>
+          <a href="https://locust.io/" target="_blank" rel="noopener noreferrer">Locust <span class="tag">压测 UI</span></a>
+        </div>
+        <div class="card service-card optional-card"><h3>Data lineage</h3>
+          <a href="https://marquezproject.ai/" target="_blank" rel="noopener noreferrer">Marquez <span class="tag">数据血缘</span></a>
+          <a href="https://openlineage.io/" target="_blank" rel="noopener noreferrer">OpenLineage <span class="tag">采集标准</span></a>
+        </div>
+        <div class="card service-card optional-card"><h3>Enterprise platform</h3>
+          <a href="https://goharbor.io/" target="_blank" rel="noopener noreferrer">Harbor <span class="tag">镜像仓库</span></a>
+          <a href="https://jfrog.com/artifactory/" target="_blank" rel="noopener noreferrer">JFrog Artifactory <span class="tag">制品仓库</span></a>
+          <a href="https://sentry.io/" target="_blank" rel="noopener noreferrer">Sentry <span class="tag">错误追踪</span></a>
+          <a href="https://backstage.io/" target="_blank" rel="noopener noreferrer">Backstage <span class="tag">开发者门户</span></a>
+          <a href="https://argo-cd.readthedocs.io/" target="_blank" rel="noopener noreferrer">Argo CD <span class="tag">GitOps</span></a>
+        </div>
+      </div>
+    </section>
+    <section>
+      <div class="section-title"><h2>Default credentials</h2><small>仅限本地开发环境使用</small></div>
+      <div class="card table-card">
         <small>These credentials are for local development only.</small>
+        <div class="table-wrap">
         <table>
           <thead><tr><th>Service</th><th>Username</th><th>Password / Token</th></tr></thead>
           <tbody>
@@ -89,12 +151,14 @@
             <tr><td>Vault</td><td>Token</td><td><code>local-dev-root-token</code></td></tr>
           </tbody>
         </table>
-        <small>Jenkins、Nexus、Airflow、SFTPGo 等服务的初始凭据由容器首次启动生成，请查看对应容器日志或数据目录。</small>
+        </div>
+        <span class="note">Jenkins、Nexus、Airflow、SFTPGo 等服务的初始凭据由容器首次启动生成，请查看对应容器日志或数据目录。</span>
       </div>
     </section>
     <section>
-      <h2>Direct service endpoints</h2>
-      <div class="card">
+      <div class="section-title"><h2>Direct service endpoints</h2><small>宿主机直连地址会自动匹配当前域名</small></div>
+      <div class="card table-card">
+        <div class="table-wrap">
         <table>
           <thead><tr><th>Service</th><th>Connection</th><th>Username</th><th>Password</th></tr></thead>
           <tbody>
@@ -107,17 +171,20 @@
             <tr><td>Kafka</td><td><code class="host-port" data-port="9092"></code></td><td>-</td><td>-</td></tr>
             <tr><td>RabbitMQ AMQP</td><td><code class="host-port" data-port="5672"></code></td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
             <tr><td>Pulsar</td><td><code class="host-port" data-port="6650"></code></td><td>-</td><td>-</td></tr>
+            <tr><td>ClickHouse HTTP</td><td><code class="host-port" data-port="8123"></code></td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
             <tr><td>ClickHouse Native TCP</td><td><code class="host-port" data-port="9009"></code></td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
             <tr><td>MinIO S3 API</td><td><code class="host-port" data-port="9001"></code></td><td>minioadmin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
             <tr><td>Qdrant gRPC</td><td><code class="host-port" data-port="6334"></code></td><td>-</td><td>-</td></tr>
           </tbody>
         </table>
-        <small>Use the current host name shown in each connection value. Additional ports are documented in PORTS.md.</small>
+        </div>
+        <span class="note">Use the current host name shown in each connection value. Additional ports are documented in PORTS.md.</span>
       </div>
     </section>
     <section>
-      <h2>Cluster configuration</h2>
-      <div class="card">
+      <div class="section-title"><h2>Cluster configuration</h2><small>容器间优先使用服务名连接</small></div>
+      <div class="card table-card">
+        <div class="table-wrap">
         <table>
           <thead><tr><th>Cluster</th><th>Network</th><th>Bootstrap / endpoint</th><th>Connection method</th><th>Nodes</th></tr></thead>
           <tbody>
@@ -128,7 +195,8 @@
             <tr><td>Infrastructure</td><td><code>infra-network</code></td><td><code>postgres:5432</code></td><td>JDBC <code>jdbc:postgresql://postgres:5432/&lt;db&gt;</code>; Redis <code>redis:6379</code>; ClickHouse HTTP <code>/clickhouse/</code></td><td>PostgreSQL, Redis, MinIO, Keycloak</td></tr>
           </tbody>
         </table>
-        <small>容器之间使用服务名连接；从宿主机连接请使用本机主机名和 PORTS.md 中的映射端口。</small>
+        </div>
+        <span class="note">容器之间使用服务名连接；从宿主机连接请使用本机主机名和 PORTS.md 中的映射端口。</span>
       </div>
     </section>
   </main>

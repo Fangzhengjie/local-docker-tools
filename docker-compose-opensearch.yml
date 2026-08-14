@@ -12,6 +12,7 @@ name: opensearch-cluster
 
 services:
 
+  # 作用：OpenSearch：全文搜索、日志索引和检索
   opensearch-node-1:
     restart: always
     image: opensearchproject/opensearch:2
@@ -45,6 +46,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：OpenSearch：全文搜索、日志索引和检索
   opensearch-node-2:
     restart: always
     image: opensearchproject/opensearch:2
@@ -78,6 +80,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：OpenSearch：全文搜索、日志索引和检索
   opensearch-node-3:
     restart: always
     image: opensearchproject/opensearch:2
@@ -111,6 +114,7 @@ services:
       retries: 5
       start_period: 30s
 
+  # 作用：OpenSearch：全文搜索、日志索引和检索
   opensearch-cluster-dashboards:
     restart: always
     image: opensearchproject/opensearch-dashboards:2

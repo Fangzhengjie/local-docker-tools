@@ -10,6 +10,7 @@ name: mongo-cluster
 
 services:
 
+  # 作用：MongoDB：文档型数据库
   mongo-rs-1:
     restart: always
     image: mongo:7
@@ -33,6 +34,7 @@ services:
       retries: 5
       start_period: 20s
 
+  # 作用：MongoDB：文档型数据库
   mongo-rs-2:
     restart: always
     image: mongo:7
@@ -59,6 +61,7 @@ services:
       retries: 5
       start_period: 20s
 
+  # 作用：MongoDB：文档型数据库
   mongo-rs-3:
     restart: always
     image: mongo:7
@@ -86,6 +89,7 @@ services:
       start_period: 20s
 
   # Replica Set 初始化
+  # 作用：初始化容器：创建集群拓扑、用户或元数据
   mongo-rs-init:
     image: mongo:7
     container_name: mongo-rs-init

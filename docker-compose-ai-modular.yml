@@ -13,6 +13,7 @@ services:
 
   # Ollama - 本地 LLM 推理引擎（支持 llama3、mistral、qwen 等）
   # 模型存储在 VOLUME_BASE/ollama/models，首次使用需手动 pull
+  # 作用：Ollama：本地运行和管理大语言模型
   ollama:
     restart: always
     image: ollama/ollama:latest
@@ -32,6 +33,7 @@ services:
       start_period: 20s
 
   # Open WebUI - 本地 ChatGPT 风格界面，对接 Ollama
+  # 作用：Open WebUI：大模型对话和模型管理界面
   open-webui:
     restart: always
     image: ghcr.io/open-webui/open-webui:latest
@@ -61,6 +63,7 @@ services:
   # ─────────────────────────────────────────────
 
   # Pipelines - Open WebUI 函数管道（自定义 RAG / Filter / Function）
+  # 作用：Open WebUI Pipelines：模型调用和工具链编排
   pipelines:
     restart: always
     image: ghcr.io/open-webui/pipelines:main
@@ -82,6 +85,7 @@ services:
       start_period: 10s
 
   # SearXNG - 隐私搜索引擎（给 Open WebUI 提供 Web 搜索能力）
+  # 作用：SearXNG：聚合多个搜索引擎的隐私搜索服务
   searxng:
     restart: always
     image: searxng/searxng:latest
@@ -100,6 +104,7 @@ services:
       start_period: 10s
 
   # MCPO - MCP-to-OpenAPI 桥接（将 MCP 工具暴露为 OpenAPI 给 Open WebUI）
+  # 作用：MCPO：把 MCP 工具转换为 OpenAPI 接口
   mcpo:
     restart: always
     image: ghcr.io/open-webui/mcpo:main
@@ -121,6 +126,7 @@ services:
   # ─────────────────────────────────────────────
 
   # Qdrant - 高性能向量数据库，适合 RAG 场景
+  # 作用：Qdrant：向量数据库和相似度检索
   qdrant:
     restart: always
     image: qdrant/qdrant:latest
@@ -144,6 +150,7 @@ services:
   # ─────────────────────────────────────────────
 
   # etcd - Milvus 元数据存储
+  # 作用：etcd：Milvus 的元数据和集群协调存储
   milvus-etcd:
     restart: always
     image: quay.io/coreos/etcd:v3.5.25
@@ -168,6 +175,7 @@ services:
       retries: 3
 
   # MinIO - Milvus 对象存储（独立实例，避免与 devtools minio 冲突）
+  # 作用：MinIO：S3 兼容对象存储，保存文件和数据湖对象
   milvus-minio:
     restart: always
     image: minio/minio:latest
@@ -188,6 +196,7 @@ services:
       start_period: 10s
 
   # Milvus Standalone - 高性能向量数据库
+  # 作用：Milvus：向量数据库和 AI 检索服务
   milvus:
     restart: always
     image: milvusdb/milvus:v3.0.0
@@ -222,6 +231,7 @@ services:
       start_period: 90s
 
   # Attu - Milvus 可视化管理界面
+  # 作用：Attu：Milvus 管理控制台
   attu:
     restart: always
     image: zilliz/attu:v3.0.0-beta.6
@@ -238,6 +248,7 @@ services:
   # 向量数据库：Weaviate（GraphQL 原生，模块化架构）
   # ─────────────────────────────────────────────
 
+  # 作用：Weaviate：向量数据库和语义检索
   weaviate:
     restart: always
     image: semitechnologies/weaviate:latest
@@ -265,6 +276,7 @@ services:
   # 向量数据库：ChromaDB（轻量级，LangChain 默认推荐）
   # ─────────────────────────────────────────────
 
+  # 作用：ChromaDB：轻量级向量数据库
   chromadb:
     restart: always
     image: chromadb/chroma:latest
@@ -288,6 +300,7 @@ services:
   # 向量数据库：pgvector（PostgreSQL 向量扩展，SQL 原生）
   # ─────────────────────────────────────────────
 
+  # 作用：pgvector：支持向量检索的 PostgreSQL
   pgvector:
     restart: always
     image: pgvector/pgvector:pg16
@@ -313,6 +326,7 @@ services:
   # LLM 网关：LiteLLM（统一 API 代理）
   # ─────────────────────────────────────────────
 
+  # 作用：LiteLLM：统一不同大模型供应商的 API 网关
   litellm:
     restart: always
     image: ghcr.io/berriai/litellm:main-latest
@@ -348,6 +362,7 @@ services:
   # AI 流程编排：Flowise（可视化 LLM 工作流）
   # ─────────────────────────────────────────────
 
+  # 作用：Flowise：可视化构建 LLM 应用和 Agent 流程
   flowise:
     restart: always
     image: flowiseai/flowise:2.2.7

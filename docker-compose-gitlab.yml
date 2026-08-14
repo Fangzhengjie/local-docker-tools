@@ -1,6 +1,7 @@
 name: gitlab
 
 services:
+  # 作用：GitLab：代码托管、CI/CD 和 DevOps 平台
   gitlab:
     image: ${GITLAB_IMAGE:-gitlab/gitlab-ce:latest}
     container_name: gitlab

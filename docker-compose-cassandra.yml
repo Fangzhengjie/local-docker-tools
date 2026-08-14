@@ -11,6 +11,7 @@ name: cassandra-cluster
 
 services:
 
+  # 作用：Cassandra：分布式宽列数据库
   cassandra-node-1:
     restart: always
     image: cassandra:4
@@ -38,6 +39,7 @@ services:
       retries: 10
       start_period: 60s
 
+  # 作用：Cassandra：分布式宽列数据库
   cassandra-node-2:
     restart: always
     image: cassandra:4
@@ -68,6 +70,7 @@ services:
       retries: 10
       start_period: 60s
 
+  # 作用：Cassandra：分布式宽列数据库
   cassandra-node-3:
     restart: always
     image: cassandra:4

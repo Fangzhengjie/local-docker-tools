@@ -14,6 +14,7 @@ x-mysql-password: &mysql-pwd "cZgWD@tPYvTx^EZAWQ-_g5aY"
 
 services:
 
+  # 作用：MySQL：关系型数据库，提供应用数据存储
   mysql-master:
     restart: always
     image: mysql:8.4
@@ -57,6 +58,7 @@ services:
       retries: 10
       start_period: 30s
 
+  # 作用：MySQL：关系型数据库，提供应用数据存储
   mysql-slave-1:
     restart: always
     image: mysql:8.4
@@ -119,6 +121,7 @@ services:
       retries: 10
       start_period: 30s
 
+  # 作用：MySQL：关系型数据库，提供应用数据存储
   mysql-slave-2:
     restart: always
     image: mysql:8.4

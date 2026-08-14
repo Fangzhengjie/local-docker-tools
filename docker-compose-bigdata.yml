@@ -5,6 +5,7 @@ name: bigdata
 services:
 
   # ZooKeeper（Hive / HBase 依赖）
+  # 作用：ZooKeeper：为分布式服务提供选主、协调和配置管理
   zookeeper:
     restart: always
     image: zookeeper:latest
@@ -26,6 +27,7 @@ services:
       start_period: 20s
 
   # Hadoop NameNode（HDFS，Hive 依赖）
+  # 作用：Hadoop：分布式文件系统和大数据基础设施
   hadoop:
     restart: always
     image: apache/hadoop:3
@@ -72,6 +74,7 @@ services:
       start_period: 60s
 
   # Hive Metastore + HiveServer2（依赖 hadoop）
+  # 作用：Hive：面向数据仓库的 SQL 查询和元数据管理
   hive:
     restart: always
     image: apache/hive:4.0.1
@@ -93,6 +96,7 @@ services:
       start_period: 120s
 
   # Apache Spark（Master）
+  # 作用：Spark：批处理、流处理和大数据计算
   spark:
     restart: always
     image: apache/spark:latest
@@ -115,6 +119,7 @@ services:
       start_period: 30s
 
   # Spark Worker
+  # 作用：Spark：批处理、流处理和大数据计算
   spark-worker:
     restart: always
     image: apache/spark:latest
@@ -129,6 +134,7 @@ services:
       bigdata-network:
 
   # Apache Flink（JobManager）
+  # 作用：Flink：实时流处理和有状态计算
   flink:
     restart: always
     image: flink:latest
@@ -148,6 +154,7 @@ services:
       start_period: 30s
 
   # Flink TaskManager
+  # 作用：Flink：实时流处理和有状态计算
   flink-taskmanager:
     restart: always
     image: flink:latest
@@ -164,11 +171,13 @@ services:
       bigdata-network:
 
   # ClickHouse（列式 OLAP 数据库）
+  # 作用：ClickHouse：面向分析的列式数据库
   clickhouse:
     restart: always
     image: clickhouse/clickhouse-server:latest
     container_name: clickhouse
     ports:
+      - "8123:8123"   # HTTP SQL
       - "9009:9000"   # Native TCP（应用直连）
     environment:
       CLICKHOUSE_USER: admin

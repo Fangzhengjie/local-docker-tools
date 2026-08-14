@@ -4,6 +4,7 @@ name: observability
 
 services:
 
+  # 作用：Prometheus：采集和存储监控指标
   prometheus:
     restart: always
     image: prom/prometheus:latest
@@ -25,6 +26,7 @@ services:
       retries: 5
       start_period: 15s
 
+  # 作用：Grafana：监控指标可视化和告警看板
   grafana:
     restart: always
     image: grafana/grafana:latest
@@ -47,6 +49,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # 作用：Jaeger：分布式链路追踪查询
   jaeger:
     restart: always
     image: jaegertracing/all-in-one:latest
@@ -65,6 +68,7 @@ services:
       timeout: 5s
       retries: 5
 
+  # 作用：OpenObserve：统一日志、指标和追踪观测平台
   openobserve:
     restart: always
     image: openobserve/openobserve:latest

@@ -134,6 +134,7 @@
 | 8125 | clickhouse s1r2 | cluster-clickhouse | HTTP API shard1-rep2 |
 | 8126 | clickhouse s2r1 | cluster-clickhouse | HTTP API shard2-rep1 |
 | 8127 | clickhouse s2r2 | cluster-clickhouse | HTTP API shard2-rep2 |
+| 8123 | clickhouse | devtools | HTTP API |
 | 9009 | clickhouse | devtools | Native TCP（host→9000） |
 | 9010 | clickhouse s1r1 | cluster-clickhouse | Native TCP |
 | 9011 | clickhouse s1r2 | cluster-clickhouse | Native TCP |
@@ -165,6 +166,8 @@
 | *(nginx)* | sonarqube | devtools | 通过 nginx `/sonarqube` 访问 |
 | 26500 | camunda | devtools | Camunda 8 Zeebe gRPC |
 | 8088 | camunda | devtools | Camunda 8 REST API / Operate / Tasklist |
+| *(nginx)* | camunda7 | camunda7 | 通过 nginx `/camunda7` 访问；复用共享 PostgreSQL 的独立 `camunda7` 数据库 |
+| 8089 | locust | optional（未部署） | Locust 压测 Web UI；启用 `loadtest` profile 后使用 |
 | *(nginx)* | kafka-ui | devtools | 通过 nginx `/kafka-ui` 访问 |
 | *(nginx)* | rocketmq-dashboard | devtools | 通过 nginx `/rocketmq` 访问 |
 | *(nginx)* | rabbitmq mgmt | devtools | 通过 nginx `/rabbitmq` 访问 |
