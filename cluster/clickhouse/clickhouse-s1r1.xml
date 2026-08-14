@@ -32,10 +32,9 @@
         </local_cluster>
     </remote_servers>
     <zookeeper>
-        <node>
-            <host>clickhouse-zk</host>
-            <port>2181</port>
-        </node>
+        <node><host>zookeeper1</host><port>2181</port></node>
+        <node><host>zookeeper2</host><port>2181</port></node>
+        <node><host>zookeeper3</host><port>2181</port></node>
     </zookeeper>
     <macros>
         <shard>01</shard>

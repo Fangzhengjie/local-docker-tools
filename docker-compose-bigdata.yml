@@ -102,6 +102,7 @@ services:
       SPARK_MASTER_HOST: spark
       SPARK_MASTER_PORT: 7077
       SPARK_MASTER_WEBUI_PORT: 8080
+      SPARK_MASTER_OPTS: "-Dspark.ui.reverseProxy=true -Dspark.ui.reverseProxyUrl=/spark"
     ports:
       - "7077:7077"   # Spark Master RPC
     networks:

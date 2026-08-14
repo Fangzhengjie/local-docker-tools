@@ -310,6 +310,6 @@
 | 8086 | nexus | 制品仓库 |
 | 3001 / 2222 | gitea | Git Web / SSH |
 | 3002 | uptime-kuma | 服务可用性监控 |
-| 8085 | debezium-connect | Kafka Connect CDC |
+| Nginx `/debezium/connectors` | debezium-connect | Kafka Connect CDC API（不暴露宿主机 Web 端口） |
 | 8087 / 2022 | sftpgo | Web / SFTP |
 | 3310 | clamav | 病毒扫描服务 |

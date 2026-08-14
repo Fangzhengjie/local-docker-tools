@@ -12,6 +12,21 @@
 | postgres | localhost:5432 | PostgreSQL 17 |
 | redis | localhost:6379 | Redis 7 |
 
+### Nginx 配置维护
+
+Nginx 的公共 server 配置位于 `nginx/conf.d/default.conf`，每个服务的路径代理位于
+`nginx/conf.d/<service>.routes.conf`。新增或修改服务路由时只需维护对应文件；
+Nginx 会通过 `include /etc/nginx/conf.d/*.routes.conf` 自动加载这些配置。
+
+需要处理 context path 的服务，在对应 `location` 内只设置一次
+`set $context_path /<service>;`，然后复用 `nginx/conf.d/context_path.inc`。
+不要在全局按 `/static`、`/api` 或 `/web` 猜测服务归属，这些路径在不同服务间会冲突。
+部署配置时执行 `docker exec nginx nginx -t`，成功后再执行
+`docker exec nginx nginx -s reload`；配置文件统一通过 `nginx/conf.d` 挂载目录发布。
+
+GitLab 配置位于 `docker-compose-gitlab.yml`，默认使用 `gitlab` profile，不会随常规
+Compose 启动；需要时显式执行 `docker compose --profile gitlab -f docker-compose-gitlab.yml up -d`。
+
 ### mq（消息队列）
 
 | 服务 | 地址 | 说明 |
@@ -62,7 +77,7 @@
 | prometheus | http://prometheus.local.dev | 指标采集 |
 | grafana | http://grafana.local.dev | 监控面板 (admin/admin) |
 | jaeger | http://jaeger.local.dev | 分布式链路追踪 UI |
-| openobserve | http://openobserve.local.dev | 日志收集 + 查询 UI（admin@local.com / admin123） |
+| openobserve | Nginx `/openobserve/` | 日志收集 + 查询 UI（admin@local.com / cZgWD@tPYvTx^EZAWQ-_g5aY） |
 
 ### qa（代码质量）
 
@@ -126,7 +141,7 @@
 | nexus | http://localhost:8086 | Maven/npm/PyPI/Docker 制品仓库 |
 | gitea | http://localhost:3001 | 私有 Git 服务 |
 | uptime-kuma | http://localhost:3002 | 服务可用性监控 |
-| debezium-connect | http://localhost:8085 | CDC 数据同步 |
+| debezium-connect | Nginx `/debezium/connectors` | CDC 数据同步 API |
 | sftpgo | http://localhost:8087 | SFTP/Web 文件服务 |
 | clamav | localhost:3310 | 文件病毒扫描 |
 
@@ -642,7 +657,7 @@ OpenObserve 是轻量级一站式可观测性平台，本地用于**日志收集
 
 ### 访问
 - **Web UI**：`http://openobserve.local.dev`
-- **账号**：`admin@local.com` / `admin123`
+- **账号**：`admin@local.com` / `cZgWD@tPYvTx^EZAWQ-_g5aY`
 - **OTLP HTTP 日志接收端点**：`http://localhost:5080/api/default/v1/logs`（容器内：`http://openobserve:5080/api/default/v1/logs`）
 
 ### Spring Boot 接入（推荐：OTLP HTTP）
@@ -675,7 +690,7 @@ management:
     logging:
       endpoint: http://localhost:5080/api/default/v1/logs
       headers:
-        Authorization: "Basic YWRtaW5AbG9jYWwuY29tOmFkbWluMTIz"  # admin@local.com:admin123 base64
+        Authorization: "Basic YWRtaW5AbG9jYWwuY29tOmNaZ1dEQHRQWXZUeF5FWkFXUS1fZzVhWQ=="  # admin@local.com:cZgWD@tPYvTx^EZAWQ-_g5aY base64
   logging:
     structured:
       format: json   # 结构化 JSON 日志，OpenObserve 可解析字段
@@ -687,7 +702,7 @@ management:
       endpoint: http://localhost:4318/v1/traces
 ```
 
-> Authorization header 的 Base64 值由 `admin@local.com:admin123` 编码而来，如修改密码需重新生成。
+> Authorization header 的 Base64 值由 `admin@local.com:cZgWD@tPYvTx^EZAWQ-_g5aY` 编码而来，如修改密码需重新生成。
 
 **3. 在 OpenObserve 查看日志**
 1. 打开 `http://openobserve.local.dev`

@@ -1,0 +1,74 @@
+name: zookeeper-cluster
+
+services:
+  zookeeper1:
+    image: zookeeper:3.9
+    container_name: zookeeper1
+    restart: always
+    environment:
+      ZOO_MY_ID: 1
+      ZOO_SERVERS: "server.1=zookeeper1:2888:3888;2181 server.2=zookeeper2:2888:3888;2181 server.3=zookeeper3:2888:3888;2181"
+      ZOO_4LW_COMMANDS_WHITELIST: "mntr,ruok,srvr"
+    volumes:
+      - ${VOLUME_BASE}/zookeeper-cluster/zookeeper1/data:/data
+      - ${VOLUME_BASE}/zookeeper-cluster/zookeeper1/datalog:/datalog
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.100
+      infra-network:
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  zookeeper2:
+    image: zookeeper:3.9
+    container_name: zookeeper2
+    restart: always
+    environment:
+      ZOO_MY_ID: 2
+      ZOO_SERVERS: "server.1=zookeeper1:2888:3888;2181 server.2=zookeeper2:2888:3888;2181 server.3=zookeeper3:2888:3888;2181"
+      ZOO_4LW_COMMANDS_WHITELIST: "mntr,ruok,srvr"
+    volumes:
+      - ${VOLUME_BASE}/zookeeper-cluster/zookeeper2/data:/data
+      - ${VOLUME_BASE}/zookeeper-cluster/zookeeper2/datalog:/datalog
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.106
+      infra-network:
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  zookeeper3:
+    image: zookeeper:3.9
+    container_name: zookeeper3
+    restart: always
+    environment:
+      ZOO_MY_ID: 3
+      ZOO_SERVERS: "server.1=zookeeper1:2888:3888;2181 server.2=zookeeper2:2888:3888;2181 server.3=zookeeper3:2888:3888;2181"
+      ZOO_4LW_COMMANDS_WHITELIST: "mntr,ruok,srvr"
+    volumes:
+      - ${VOLUME_BASE}/zookeeper-cluster/zookeeper3/data:/data
+      - ${VOLUME_BASE}/zookeeper-cluster/zookeeper3/datalog:/datalog
+    networks:
+      cluster-network:
+        ipv4_address: 172.21.0.107
+      infra-network:
+    healthcheck:
+      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+networks:
+  cluster-network:
+    external: true
+  infra-network:
+    external: true

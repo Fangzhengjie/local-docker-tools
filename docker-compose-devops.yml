@@ -7,7 +7,7 @@ services:
 
   sonarqube:
     restart: always
-    image: sonarqube:latest
+    image: sonarqube:25.12.0.117093-community
     container_name: sonarqube
     user: root
     environment:

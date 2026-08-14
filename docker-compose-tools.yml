@@ -39,7 +39,7 @@ services:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"
-      AIRFLOW__WEBSERVER__BASE_URL: http://localhost/airflow/
+      AIRFLOW__WEBSERVER__BASE_URL: https://w9060sh012w11.s09060.cn.wal-mart.com/airflow/
     volumes:
       - ${VOLUME_BASE}/airflow:/opt/airflow
     networks:
@@ -78,6 +78,7 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
+    user: "0:0"
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-local-dev-pgadmin}

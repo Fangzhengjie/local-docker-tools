@@ -1,0 +1,28 @@
+name: gitlab
+
+services:
+  gitlab:
+    image: ${GITLAB_IMAGE:-gitlab/gitlab-ce:latest}
+    container_name: gitlab
+    hostname: gitlab.local
+    profiles:
+      - gitlab
+    restart: unless-stopped
+    shm_size: "256m"
+    environment:
+      GITLAB_OMNIBUS_CONFIG: |
+        external_url 'http://localhost:8929'
+        gitlab_rails['gitlab_shell_ssh_port'] = 2229
+    ports:
+      - "8929:80"
+      - "2229:22"
+    volumes:
+      - ${VOLUME_BASE}/gitlab/config:/etc/gitlab
+      - ${VOLUME_BASE}/gitlab/logs:/var/log/gitlab
+      - ${VOLUME_BASE}/gitlab/data:/var/opt/gitlab
+    networks:
+      - infra-network
+
+networks:
+  infra-network:
+    external: true

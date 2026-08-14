@@ -12,27 +12,6 @@ name: clickhouse-cluster
 
 services:
 
-  # ZooKeeper for ClickHouse 协调
-  clickhouse-zk:
-    restart: always
-    image: zookeeper:3.9
-    container_name: clickhouse-zk
-    environment:
-      ZOO_MY_ID: 1
-      ZOO_4LW_COMMANDS_WHITELIST: "mntr,ruok,srvr"
-    volumes:
-      - ${VOLUME_BASE}/clickhouse-cluster/zk/data:/data
-      - ${VOLUME_BASE}/clickhouse-cluster/zk/datalog:/datalog
-    networks:
-      cluster-network:
-        ipv4_address: 172.21.0.100
-    healthcheck:
-      test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-
   # Shard 1 Replica 1
   clickhouse-s1r1:
     restart: always
@@ -49,9 +28,6 @@ services:
       - ${VOLUME_BASE}/clickhouse-cluster/s1r1/data:/var/lib/clickhouse
       - ${VOLUME_BASE}/clickhouse-cluster/s1r1/logs:/var/log/clickhouse-server
       - ./clickhouse/clickhouse-s1r1.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
-    depends_on:
-      clickhouse-zk:
-        condition: service_healthy
     networks:
       cluster-network:
         ipv4_address: 172.21.0.101
@@ -78,9 +54,6 @@ services:
       - ${VOLUME_BASE}/clickhouse-cluster/s1r2/data:/var/lib/clickhouse
       - ${VOLUME_BASE}/clickhouse-cluster/s1r2/logs:/var/log/clickhouse-server
       - ./clickhouse/clickhouse-s1r2.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
-    depends_on:
-      clickhouse-zk:
-        condition: service_healthy
     networks:
       cluster-network:
         ipv4_address: 172.21.0.102
@@ -107,9 +80,6 @@ services:
       - ${VOLUME_BASE}/clickhouse-cluster/s2r1/data:/var/lib/clickhouse
       - ${VOLUME_BASE}/clickhouse-cluster/s2r1/logs:/var/log/clickhouse-server
       - ./clickhouse/clickhouse-s2r1.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
-    depends_on:
-      clickhouse-zk:
-        condition: service_healthy
     networks:
       cluster-network:
         ipv4_address: 172.21.0.103
@@ -136,9 +106,6 @@ services:
       - ${VOLUME_BASE}/clickhouse-cluster/s2r2/data:/var/lib/clickhouse
       - ${VOLUME_BASE}/clickhouse-cluster/s2r2/logs:/var/log/clickhouse-server
       - ./clickhouse/clickhouse-s2r2.xml:/etc/clickhouse-server/config.d/cluster.xml:ro
-    depends_on:
-      clickhouse-zk:
-        condition: service_healthy
     networks:
       cluster-network:
         ipv4_address: 172.21.0.104
@@ -152,7 +119,4 @@ services:
 networks:
   cluster-network:
     name: cluster-network
-    driver: bridge
-    ipam:
-      config:
-        - subnet: 172.21.0.0/16
+    external: true
