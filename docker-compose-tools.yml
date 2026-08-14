@@ -5,8 +5,6 @@ services:
     image: trinodb/trino:latest
     container_name: trino
     user: "0:0"
-    ports:
-      - "8089:8080"
     volumes:
       - ./trino:/etc/trino:ro
       - ${VOLUME_BASE}/trino/data:/data/trino
@@ -23,8 +21,6 @@ services:
       sh -c "superset db upgrade &&
       superset init &&
       superset run -h 0.0.0.0 -p 8088"
-    ports:
-      - "8091:8088"
     environment:
       SUPERSET_SECRET_KEY: ${SUPERSET_SECRET_KEY:-local-dev-superset-secret}
     volumes:
@@ -39,12 +35,11 @@ services:
     container_name: airflow
     user: "0:0"
     command: standalone
-    ports:
-      - "8083:8080"
     environment:
       AIRFLOW__CORE__LOAD_EXAMPLES: "false"
       AIRFLOW__CORE__EXECUTOR: SequentialExecutor
       AIRFLOW__WEBSERVER__EXPOSE_CONFIG: "false"
+      AIRFLOW__WEBSERVER__BASE_URL: http://localhost/airflow/
     volumes:
       - ${VOLUME_BASE}/airflow:/opt/airflow
     networks:
@@ -63,10 +58,9 @@ services:
   jupyter:
     image: quay.io/jupyter/scipy-notebook:latest
     container_name: jupyter
-    ports:
-      - "8889:8888"
     environment:
       JUPYTER_TOKEN: ${JUPYTER_TOKEN:-local-dev-jupyter}
+    command: start-notebook.py --ServerApp.base_url=/jupyter/
     volumes:
       - ${VOLUME_BASE}/jupyter:/home/jovyan/work
     networks:
@@ -76,8 +70,6 @@ services:
     image: ghcr.io/mlflow/mlflow:v2.22.0
     container_name: mlflow
     command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:////mlflow/mlflow.db
-    ports:
-      - "5000:5000"
     volumes:
       - ${VOLUME_BASE}/mlflow:/mlflow
     networks:
@@ -86,8 +78,6 @@ services:
   pgadmin:
     image: dpage/pgadmin4:latest
     container_name: pgadmin
-    ports:
-      - "5050:80"
     environment:
       PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL:-admin@local.dev}
       PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD:-local-dev-pgadmin}
@@ -100,8 +90,6 @@ services:
     image: redis/redisinsight:latest
     container_name: redisinsight
     user: "0:0"
-    ports:
-      - "5540:5540"
     volumes:
       - ${VOLUME_BASE}/redisinsight:/data
     networks:
@@ -110,8 +98,9 @@ services:
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
-    ports:
-      - "9093:9093"
+    command:
+      - --config.file=/etc/alertmanager/alertmanager.yml
+      - --web.external-url=/alertmanager/
     volumes:
       - ./alertmanager:/etc/alertmanager:ro
     networks:
@@ -120,16 +109,12 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
-    ports:
-      - "9100:9100"
     networks:
       - infra-network
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    ports:
-      - "8082:8080"
     volumes:
       - /:/rootfs:ro
       - /var/run:/var/run:ro
@@ -155,8 +140,6 @@ services:
     container_name: keycloak
     user: "0:0"
     command: start-dev
-    ports:
-      - "8181:8080"
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: ${KEYCLOAK_ADMIN:-admin}
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-local-dev-keycloak}
@@ -168,8 +151,6 @@ services:
   vault:
     image: hashicorp/vault:latest
     container_name: vault
-    ports:
-      - "8200:8200"
     command: server -dev -dev-root-token-id=local-dev-root-token -dev-listen-address=0.0.0.0:8200
     environment:
       VAULT_ADDR: http://127.0.0.1:8200
@@ -185,10 +166,10 @@ services:
     container_name: jenkins
     user: "0:0"
     ports:
-      - "8084:8080"
       - "50000:50000"
     environment:
       JAVA_OPTS: -Djenkins.install.runSetupWizard=false
+      JENKINS_OPTS: --prefix=/jenkins
     volumes:
       - ${VOLUME_BASE}/jenkins:/var/jenkins_home
     networks:
@@ -198,8 +179,8 @@ services:
     image: sonatype/nexus3:latest
     container_name: nexus
     user: "0:0"
-    ports:
-      - "8086:8081"
+    environment:
+      INSTALL4J_ADD_VM_PARAMS: -Dnexus-context-path=/nexus
     volumes:
       - ${VOLUME_BASE}/nexus:/nexus-data
     networks:
@@ -209,7 +190,6 @@ services:
     image: gitea/gitea:latest
     container_name: gitea
     ports:
-      - "3001:3000"
       - "2222:22"
     environment:
       USER_UID: "1000"
@@ -223,8 +203,6 @@ services:
     image: louislam/uptime-kuma:latest
     container_name: uptime-kuma
     user: "0:0"
-    ports:
-      - "3002:3001"
     volumes:
       - ${VOLUME_BASE}/uptime-kuma:/app/data
     networks:
@@ -233,8 +211,6 @@ services:
   debezium-connect:
     image: quay.io/debezium/connect:latest
     container_name: debezium-connect
-    ports:
-      - "8085:8083"
     environment:
       BOOTSTRAP_SERVERS: kafka:29092
       GROUP_ID: "debezium"
@@ -254,7 +230,6 @@ services:
     image: drakkan/sftpgo:latest
     container_name: sftpgo
     ports:
-      - "8087:8080"
       - "2022:2022"
     volumes:
       - type: bind

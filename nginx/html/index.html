@@ -18,6 +18,10 @@
     .card h3 { margin: 0 0 10px; font-size: 16px; }
     a { display: block; padding: 5px 0; color: #1d4ed8; text-decoration: none; }
     a:hover { text-decoration: underline; }
+    table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 13px; }
+    th, td { padding: 8px; border-bottom: 1px solid #e2e8f0; text-align: left; }
+    th { color: #475569; }
+    code { color: #0f172a; word-break: break-all; }
     small { color: #64748b; }
     footer { padding: 20px; color: #64748b; text-align: center; font-size: 12px; }
   </style>
@@ -33,47 +37,88 @@
       <div class="grid">
         <div class="card"><h3>Workflow and DevOps</h3>
           <a href="/camunda/">Camunda 8</a><a href="/sonarqube/">SonarQube</a>
-          <a href="#" data-port="8084">Jenkins</a><a href="#" data-port="8086">Nexus</a>
-          <a href="#" data-port="3001">Gitea</a>
+          <a href="/jenkins/">Jenkins</a><a href="/nexus/">Nexus</a>
+          <a href="/gitea/">Gitea</a>
         </div>
         <div class="card"><h3>Data and analytics</h3>
           <a href="/hadoop/">Hadoop</a><a href="/hive/">Hive</a><a href="/spark/">Spark</a>
-          <a href="/flink/">Flink</a><a href="#" data-port="8089">Trino</a>
-          <a href="#" data-port="8091">Superset</a><a href="#" data-port="8083">Airflow</a>
+          <a href="/flink/">Flink</a><a href="/trino/">Trino</a>
+          <a href="/superset/">Superset</a><a href="/airflow/">Airflow</a>
         </div>
         <div class="card"><h3>AI and ML</h3>
-          <a href="#" data-port="3100">Open WebUI</a><a href="#" data-port="8889">JupyterLab</a>
-          <a href="#" data-port="5000">MLflow</a><a href="#" data-port="4000">LiteLLM</a>
-          <a href="#" data-port="8300">Attu</a>
+          <a href="/open-webui/">Open WebUI</a><a href="/jupyter/">JupyterLab</a>
+          <a href="/mlflow/">MLflow</a><a href="/litellm/">LiteLLM</a>
+          <a href="/attu/">Attu</a>
         </div>
         <div class="card"><h3>Operations and security</h3>
           <a href="/grafana/">Grafana</a><a href="/prometheus/">Prometheus</a>
           <a href="/jaeger/">Jaeger</a><a href="/openobserve/">OpenObserve</a>
-          <a href="#" data-port="3002">Uptime Kuma</a><a href="#" data-port="8200">Vault</a>
-          <a href="#" data-port="8181">Keycloak</a>
+          <a href="/uptime-kuma/">Uptime Kuma</a><a href="/vault/">Vault</a>
+          <a href="/keycloak/">Keycloak</a>
         </div>
         <div class="card"><h3>Messaging and integration</h3>
           <a href="/kafka-ui/">Kafka UI</a><a href="/rabbitmq/">RabbitMQ</a>
-          <a href="/rocketmq/">RocketMQ</a><a href="#" data-port="8085">Debezium Connect</a>
+          <a href="/rocketmq/">RocketMQ</a><a href="/pulsar/">Pulsar</a>
+          <a href="/debezium/">Debezium Connect</a>
         </div>
         <div class="card"><h3>Storage and utilities</h3>
           <a href="/minio/">MinIO</a><a href="/mailpit/">Mailpit</a>
-          <a href="#" data-port="5050">pgAdmin</a><a href="#" data-port="5540">RedisInsight</a>
-          <a href="#" data-port="8087">SFTPGo</a>
+          <a href="/pgadmin/">pgAdmin</a><a href="/redisinsight/">RedisInsight</a>
+          <a href="/sftpgo/">SFTPGo</a>
         </div>
+      </div>
+    </section>
+    <section>
+      <h2>Default credentials</h2>
+      <div class="card">
+        <small>These credentials are for local development only.</small>
+        <table>
+          <thead><tr><th>Service</th><th>Username</th><th>Password / Token</th></tr></thead>
+          <tbody>
+            <tr><td>Grafana</td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>RabbitMQ</td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>MinIO</td><td>minioadmin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>OpenObserve</td><td>admin@local.com</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>Keycloak</td><td>admin</td><td><code>local-dev-keycloak</code></td></tr>
+            <tr><td>pgAdmin</td><td>admin@local.dev</td><td><code>local-dev-pgadmin</code></td></tr>
+            <tr><td>JupyterLab</td><td>Token</td><td><code>local-dev-jupyter</code></td></tr>
+            <tr><td>LiteLLM</td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>LiteLLM API</td><td>API key</td><td><code>sk-local-dev-key</code></td></tr>
+            <tr><td>Flowise</td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>Vault</td><td>Token</td><td><code>local-dev-root-token</code></td></tr>
+          </tbody>
+        </table>
+        <small>Jenkins、Nexus、Airflow、SFTPGo 等服务的初始凭据由容器首次启动生成，请查看对应容器日志或数据目录。</small>
       </div>
     </section>
     <section>
       <h2>Direct service endpoints</h2>
       <div class="card">
-        <small>Database and API ports are documented in PORTS.md. Credentials are intentionally not displayed on this public page.</small>
+        <table>
+          <thead><tr><th>Service</th><th>Connection</th><th>Username</th><th>Password</th></tr></thead>
+          <tbody>
+            <tr><td>PostgreSQL</td><td><code class="host-port" data-port="5432"></code></td><td>postgres</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>Redis</td><td><code class="host-port" data-port="6379"></code></td><td>-</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>MySQL</td><td><code class="host-port" data-port="3306"></code></td><td>root</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>MongoDB</td><td><code class="host-port" data-port="27017"></code></td><td>mongo</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>SQL Server</td><td><code class="host-port" data-port="1433"></code></td><td>sa</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>Cassandra</td><td><code class="host-port" data-port="9042"></code></td><td>-</td><td>-</td></tr>
+            <tr><td>Kafka</td><td><code class="host-port" data-port="9092"></code></td><td>-</td><td>-</td></tr>
+            <tr><td>RabbitMQ AMQP</td><td><code class="host-port" data-port="5672"></code></td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>Pulsar</td><td><code class="host-port" data-port="6650"></code></td><td>-</td><td>-</td></tr>
+            <tr><td>ClickHouse HTTP</td><td><code class="host-port" data-port="8123"></code></td><td>admin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>MinIO S3 API</td><td><code class="host-port" data-port="9001"></code></td><td>minioadmin</td><td><code>cZgWD@tPYvTx^EZAWQ-_g5aY</code></td></tr>
+            <tr><td>Qdrant gRPC</td><td><code class="host-port" data-port="6334"></code></td><td>-</td><td>-</td></tr>
+          </tbody>
+        </table>
+        <small>Use the current host name shown in each connection value. Additional ports are documented in PORTS.md.</small>
       </div>
     </section>
   </main>
   <footer>local-docker-tools</footer>
   <script>
-    document.querySelectorAll("[data-port]").forEach(function (link) {
-      link.href = location.protocol + "//" + location.hostname + ":" + link.dataset.port;
+    document.querySelectorAll(".host-port").forEach(function (item) {
+      item.textContent = location.hostname + ":" + item.dataset.port;
     });
   </script>
 </body>

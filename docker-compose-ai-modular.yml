@@ -17,8 +17,6 @@ services:
     restart: always
     image: ollama/ollama:latest
     container_name: ollama
-    ports:
-      - "11434:11434"   # Ollama REST API（兼容 OpenAI /v1/chat/completions）
     volumes:
       - ${VOLUME_BASE}/ollama/models:/root/.ollama
     environment:
@@ -38,8 +36,6 @@ services:
     restart: always
     image: ghcr.io/open-webui/open-webui:latest
     container_name: open-webui
-    ports:
-      - "3100:8080"     # Web UI
     environment:
       OLLAMA_BASE_URL: http://ollama:11434
       WEBUI_SECRET_KEY: change-me-in-production
@@ -69,8 +65,6 @@ services:
     restart: always
     image: ghcr.io/open-webui/pipelines:main
     container_name: pipelines
-    ports:
-      - "9099:9099"     # Pipeline API
     volumes:
       - ${VOLUME_BASE}/pipelines/data:/app/pipelines
     environment:
@@ -92,8 +86,6 @@ services:
     restart: always
     image: searxng/searxng:latest
     container_name: searxng
-    ports:
-      - "8888:8080"     # Web UI（避开其他 8080 服务）
     volumes:
       - ${VOLUME_BASE}/searxng/data:/etc/searxng
     environment:
@@ -113,8 +105,6 @@ services:
     image: ghcr.io/open-webui/mcpo:main
     container_name: mcpo
     command: ["--config", "/app/config/config.json"]
-    ports:
-      - "8800:8000"     # OpenAPI endpoint
     volumes:
       - ${VOLUME_BASE}/mcpo/config:/app/config
     networks:
@@ -136,7 +126,6 @@ services:
     image: qdrant/qdrant:latest
     container_name: qdrant
     ports:
-      - "6333:6333"     # REST API + Web UI（http://localhost:6333/dashboard）
       - "6334:6334"     # gRPC
     volumes:
       - ${VOLUME_BASE}/qdrant/data:/qdrant/storage
@@ -209,7 +198,6 @@ services:
       - seccomp:unconfined
     ports:
       - "19530:19530"   # gRPC + REST API
-      - "9091:9091"     # Metrics
     environment:
       ETCD_ENDPOINTS: milvus-etcd:2379
       MINIO_ADDRESS: milvus-minio:9000
@@ -238,8 +226,6 @@ services:
     restart: always
     image: zilliz/attu:v3.0.0-beta.6
     container_name: attu
-    ports:
-      - "8300:3000"
     environment:
       MILVUS_ADDRESS: milvus:19530
     depends_on:
@@ -257,7 +243,6 @@ services:
     image: semitechnologies/weaviate:latest
     container_name: weaviate
     ports:
-      - "8380:8080"     # REST API（避开其他 8080）
       - "50051:50051"   # gRPC
     environment:
       QUERY_DEFAULTS_LIMIT: 25
@@ -284,8 +269,6 @@ services:
     restart: always
     image: chromadb/chroma:latest
     container_name: chromadb
-    ports:
-      - "8100:8000"     # REST API（避开其他 8000）
     environment:
       IS_PERSISTENT: "TRUE"
       ANONYMIZED_TELEMETRY: "FALSE"
@@ -335,9 +318,6 @@ services:
     image: ghcr.io/berriai/litellm:main-latest
     pull_policy: missing
     container_name: litellm
-    ports:
-      - "4000:4000"     # OpenAI 兼容 API（/v1/chat/completions）
-      - "4001:4001"     # Prometheus metrics
     environment:
       LITELLM_MASTER_KEY: "sk-local-dev-key"
       DATABASE_HOST: postgres
@@ -373,8 +353,6 @@ services:
     image: flowiseai/flowise:2.2.7
     container_name: flowise
     user: "0:0"
-    ports:
-      - "3101:3000"     # Web UI
     environment:
       PORT: 3000
       FLOWISE_USERNAME: admin

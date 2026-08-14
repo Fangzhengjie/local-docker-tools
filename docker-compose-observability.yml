@@ -13,8 +13,6 @@ services:
       - '--config.file=/etc/prometheus/prometheus.yml'
       - '--storage.tsdb.path=/prometheus'
       - '--web.external-url=/prometheus/'
-    ports:
-      - "9090:9090"
     volumes:
       - ${VOLUME_BASE}/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - ${VOLUME_BASE}/prometheus/data:/prometheus
@@ -71,8 +69,6 @@ services:
     restart: always
     image: openobserve/openobserve:latest
     container_name: openobserve
-    ports:
-      - "5080:5080"     # OTLP HTTP（应用上报日志/链路）
     environment:
       ZO_ROOT_USER_EMAIL: admin@local.com
       ZO_ROOT_USER_PASSWORD: cZgWD@tPYvTx^EZAWQ-_g5aY

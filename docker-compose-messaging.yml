@@ -54,6 +54,26 @@ services:
       retries: 5
       start_period: 10s
 
+  # Apache Pulsar（单机开发模式）
+  pulsar:
+      restart: always
+      image: apachepulsar/pulsar:3.3.2
+      container_name: pulsar
+      user: "0:0"
+      command: bin/pulsar standalone
+      ports:
+        - "6650:6650"     # Pulsar binary protocol
+      volumes:
+        - ${VOLUME_BASE}/pulsar/data:/pulsar/data
+      networks:
+        messaging-network:
+      healthcheck:
+        test: ["CMD-SHELL", "curl -fs http://localhost:8080/admin/v2/clusters || exit 1"]
+        interval: 30s
+        timeout: 10s
+        retries: 10
+        start_period: 60s
+
   # RabbitMQ（AMQP，含 Management UI）
   rabbitmq:
     restart: always
