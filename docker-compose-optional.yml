@@ -4,7 +4,7 @@
 name: optional
 
 services:
-  # 作用：locust 容器，提供该服务或集群节点能力
+  # 作用：Locust：基于 Python 的 Web 压力测试平台
   locust:
     profiles: ["loadtest"]
     image: locustio/locust:latest
@@ -17,7 +17,7 @@ services:
     networks:
       infra-network:
 
-  # 作用：k6 容器，提供该服务或集群节点能力
+  # 作用：k6：脚本化性能和负载测试工具，可模拟并发用户访问 API
   k6:
     profiles: ["loadtest"]
     image: grafana/k6:latest
@@ -28,7 +28,7 @@ services:
     networks:
       infra-network:
 
-  # 作用：marquez 容器，提供该服务或集群节点能力
+  # 作用：Marquez：接收和展示 OpenLineage 数据血缘
   marquez:
     profiles: ["lineage"]
     image: marquezproject/marquez:0.50.0
@@ -44,7 +44,7 @@ services:
       database-network:
       infra-network:
 
-  # 作用：marquez-web 容器，提供该服务或集群节点能力
+  # 作用：Marquez Web：数据血缘可视化界面
   marquez-web:
     profiles: ["lineage"]
     image: marquezproject/marquez-web:0.50.0

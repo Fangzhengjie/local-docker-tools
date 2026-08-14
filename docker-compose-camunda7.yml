@@ -4,7 +4,7 @@ name: camunda7
 
 services:
 
-  # 作用：camunda7 容器，提供该服务或集群节点能力
+  # 作用：Camunda 7：传统 BPMN 流程引擎和工作流平台
   camunda7:
     restart: unless-stopped
     image: camunda/camunda-bpm-platform:run-7.24.0
