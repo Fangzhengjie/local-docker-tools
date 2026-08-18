@@ -19,15 +19,14 @@ services:
       - ${VOLUME_BASE}/nginx/certs:/etc/nginx/certs:ro
       - ${VOLUME_BASE}/nginx/html:/usr/share/nginx/html:ro
     networks:
-      infra-network:
-        ipv4_address: 172.18.0.2
-      database-network:
-      messaging-network:
-      observability-network:
-      bigdata-network:
-      storage-network:
-      devops-network:
-      ai-network:
+      - infra-network
+      - database-network
+      - messaging-network
+      - observability-network
+      - bigdata-network
+      - storage-network
+      - devops-network
+      - ai-network
 
   # DNS 服务：供 Android 模拟器解析 *.local.dev
   # 模拟器启动参数: emulator -avd <名> -dns-server 10.0.2.2
