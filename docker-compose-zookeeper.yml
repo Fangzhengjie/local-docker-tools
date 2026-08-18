@@ -17,6 +17,7 @@ services:
       cluster-network:
         ipv4_address: 172.21.0.100
       infra-network:
+        ipv4_address: 172.18.0.100
     healthcheck:
       test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
       interval: 10s
@@ -40,6 +41,7 @@ services:
       cluster-network:
         ipv4_address: 172.21.0.106
       infra-network:
+        ipv4_address: 172.18.0.101
     healthcheck:
       test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
       interval: 10s
@@ -63,6 +65,7 @@ services:
       cluster-network:
         ipv4_address: 172.21.0.107
       infra-network:
+        ipv4_address: 172.18.0.102
     healthcheck:
       test: ["CMD-SHELL", "echo ruok | nc localhost 2181 | grep imok"]
       interval: 10s

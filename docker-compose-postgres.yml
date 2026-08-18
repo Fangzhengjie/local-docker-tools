@@ -31,11 +31,13 @@ services:
       -c hot_standby=on
       -c archive_mode=on
       -c archive_command='/bin/true'
+      -c hba_file=/etc/postgresql/pg_hba.conf
     ports:
       - "5434:5432"
     volumes:
       - ${VOLUME_BASE}/pg-cluster/master:/var/lib/postgresql/data
       - ${VOLUME_BASE}/pg-cluster/init:/docker-entrypoint-initdb.d
+      - ./cluster/postgres/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
     networks:
       cluster-network:
         ipv4_address: 172.21.0.40
@@ -65,8 +67,12 @@ services:
           rm -rf $$DATADIR/*
           PGPASSWORD=$$PGPASSWORD pg_basebackup -h pg-master -U postgres -D $$DATADIR -Fp -Xs -P -R
         fi
+        echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=$$PGPASSWORD'" > $$DATADIR/postgresql.auto.conf
+        echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
         touch $$DATADIR/standby.signal
         echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=cZgWD@tPYvTx^EZAWQ-_g5aY'" > $$DATADIR/postgresql.auto.conf
+        echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
+        echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=$$PGPASSWORD'" > $$DATADIR/postgresql.auto.conf
         echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
         chown -R postgres:postgres $$DATADIR
         chmod 0700 $$DATADIR
@@ -107,8 +113,12 @@ services:
           rm -rf $$DATADIR/*
           PGPASSWORD=$$PGPASSWORD pg_basebackup -h pg-master -U postgres -D $$DATADIR -Fp -Xs -P -R
         fi
+        echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=$$PGPASSWORD'" > $$DATADIR/postgresql.auto.conf
+        echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
         touch $$DATADIR/standby.signal
         echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=cZgWD@tPYvTx^EZAWQ-_g5aY'" > $$DATADIR/postgresql.auto.conf
+        echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
+        echo "primary_conninfo = 'host=pg-master port=5432 user=postgres password=$$PGPASSWORD'" > $$DATADIR/postgresql.auto.conf
         echo "hot_standby = on" >> $$DATADIR/postgresql.auto.conf
         chown -R postgres:postgres $$DATADIR
         chmod 0700 $$DATADIR
